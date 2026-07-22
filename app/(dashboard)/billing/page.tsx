@@ -1,0 +1,214 @@
+'use client';
+
+import React, { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { 
+  CreditCard, 
+  Check, 
+  Sparkles, 
+  ArrowRight, 
+  CheckCircle2
+} from 'lucide-react';
+import { MockStore } from '@/lib/supabase/mock-store';
+import { UserProfile } from '@/lib/supabase/types';
+
+function BillingContent() {
+  const searchParams = useSearchParams();
+  const [user, setUser] = React.useState<UserProfile | null>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [toastMessage, setToastMessage] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const u = MockStore.getUser();
+    setUser(u);
+
+    if (searchParams.get('success') === 'true') {
+      const updated = MockStore.updateUser({
+        subscription_status: 'pro',
+        credits_remaining: 500,
+      });
+      setUser(updated);
+      setToastMessage('🎉 Upgrade Successful! 500 Pro credits added to your account.');
+    }
+  }, [searchParams]);
+
+  const handleSubscribePro = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+      });
+      const data = await res.json();
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        const updated = MockStore.updateUser({
+          subscription_status: 'pro',
+          credits_remaining: 500,
+        });
+        setUser(updated);
+        setToastMessage('🎉 Demo Subscription Activated! You now have 500 credits.');
+      }
+    } catch (err: any) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-8 animate-in fade-in duration-300">
+      {/* Toast Notification Banner */}
+      {toastMessage && (
+        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center justify-between shadow-xl">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+            <span>{toastMessage}</span>
+          </div>
+          <button 
+            onClick={() => setToastMessage(null)}
+            className="text-emerald-400 hover:text-emerald-200 text-xs font-bold"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {/* Header Banner */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950/50 to-purple-950/50 p-6 rounded-3xl border border-slate-800 shadow-xl">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400">
+              <CreditCard className="w-5 h-5" />
+            </span>
+            <h1 className="text-2xl font-black text-white">Subscription & Credit Plans</h1>
+          </div>
+          <p className="text-xs text-slate-400">
+            Flexible monthly plans and credit packages tailored for growing sales teams.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3 bg-slate-900/90 px-4 py-2 rounded-2xl border border-slate-800 text-xs">
+          <span className="text-slate-400">Active Tier:</span>
+          <span className="font-bold text-white uppercase bg-indigo-500/20 text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-500/30">
+            {user?.subscription_status || 'free'}
+          </span>
+          <span className="text-slate-400 border-l border-slate-800 pl-3">Credits:</span>
+          <span className="font-bold text-amber-400">{user?.credits_remaining ?? 5}</span>
+        </div>
+      </div>
+
+      {/* Pricing Cards Comparison */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        {/* Free Plan */}
+        <div className="glass-panel p-8 rounded-3xl border border-slate-800 space-y-6 relative flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="inline-block px-3 py-1 rounded-full bg-slate-800 text-slate-300 text-xs font-semibold">
+              Free Starter
+            </div>
+            <div>
+              <h3 className="text-3xl font-black text-white">$0 <span className="text-xs font-normal text-slate-400">/ forever</span></h3>
+              <p className="text-xs text-slate-400 mt-1">Perfect for trying out our website scraper & Gemini AI engine.</p>
+            </div>
+
+            <div className="pt-4 border-t border-slate-800 space-y-3 text-xs text-slate-300">
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span><strong>5 Free Generations</strong> on signup</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span>Automated Website Scraper</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span>3 AI Cold Email Drafts per URL</span>
+              </div>
+              <div className="flex items-center gap-2 text-slate-500">
+                <Check className="w-4 h-4 text-slate-600" />
+                <span>CSV Batch Export</span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            disabled={user?.subscription_status === 'free'}
+            className="w-full py-3 px-4 rounded-2xl bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700 cursor-default"
+          >
+            {user?.subscription_status === 'free' ? 'Current Active Plan' : 'Downgrade to Free'}
+          </button>
+        </div>
+
+        {/* Pro Plan */}
+        <div className="glass-panel p-8 rounded-3xl border-2 border-indigo-500/60 bg-gradient-to-b from-indigo-950/30 via-slate-900 to-slate-950 space-y-6 relative flex flex-col justify-between shadow-2xl shadow-indigo-600/20">
+          <div className="absolute -top-3.5 right-6 px-3.5 py-1 rounded-full bg-gradient-to-r from-indigo-500 to-pink-500 text-white text-[10px] font-extrabold uppercase tracking-wider shadow-md">
+            Most Popular
+          </div>
+
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold border border-indigo-500/30">
+              <Sparkles className="w-3.5 h-3.5 text-pink-400" /> Pro Unlimited Sales
+            </div>
+            <div>
+              <h3 className="text-4xl font-black text-white">$49 <span className="text-xs font-normal text-slate-400">/ month</span></h3>
+              <p className="text-xs text-slate-400 mt-1">For high-performing SDRs and B2B growth teams.</p>
+            </div>
+
+            <div className="pt-4 border-t border-slate-800 space-y-3 text-xs text-slate-200">
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span><strong>500 Monthly Generations</strong> ($0.09/lead)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span>Priority Cheerio Web Scraper</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span>Gemini 1.5 Pro AI Sales Copilot</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span>Unlimited 1-Click CSV Exports</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span>Custom Target Tone Preferences</span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleSubscribePro}
+            disabled={loading || user?.subscription_status === 'pro'}
+            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-bold text-xs shadow-xl shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
+          >
+            {user?.subscription_status === 'pro' ? (
+              <span>Plan Active (500 Credits)</span>
+            ) : loading ? (
+              <span>Connecting to Stripe...</span>
+            ) : (
+              <>
+                <span>Upgrade to Pro ($49/mo)</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={
+      <div className="p-8 text-center text-xs text-slate-400 animate-pulse">
+        Loading Billing Plans...
+      </div>
+    }>
+      <BillingContent />
+    </Suspense>
+  );
+}
