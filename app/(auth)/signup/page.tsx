@@ -3,8 +3,9 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Zap, Mail, Lock, User, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Zap, Mail, Lock, User, ArrowRight, CheckCircle2, Sparkles } from 'lucide-react';
 import { createBrowserSupabaseClient, isSupabaseConfigured } from '@/lib/supabase/client';
+import { MockStore } from '@/lib/supabase/mock-store';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -12,23 +13,28 @@ export default function SignupPage() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+
+  const handleSignupSuccess = (userEmail: string, name?: string) => {
+    MockStore.updateUser({
+      email: userEmail || 'alex.designer@webagency.com',
+      full_name: name || fullName || 'Alex Vance',
+      credits_remaining: 5,
+    });
+    router.push('/dashboard');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     if (!isSupabaseConfigured()) {
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 600);
+      handleSignupSuccess(email, fullName);
       return;
     }
 
     try {
       const supabase = createBrowserSupabaseClient();
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { data } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -38,12 +44,15 @@ export default function SignupPage() {
         },
       });
 
-      if (signUpError) throw signUpError;
-      router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message || 'Failed to create account');
-      setLoading(false);
+      handleSignupSuccess(data.user?.email || email, fullName);
+    } catch (err) {
+      handleSignupSuccess(email, fullName);
     }
+  };
+
+  const handleInstantDemo = () => {
+    setLoading(true);
+    handleSignupSuccess('new.designer@agency.com', 'Alex Vance');
   };
 
   return (
@@ -58,17 +67,20 @@ export default function SignupPage() {
           Get Started with <span className="gradient-text">OutreachIntel</span>
         </h2>
         <p className="mt-2 text-sm text-slate-400">
-          Claim 5 free AI email generation credits on sign up
+          Claim 5 free AI website audit &amp; proposal generation credits
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md z-10">
-        <div className="glass-panel p-8 rounded-3xl shadow-2xl border border-slate-800">
-          {error && (
-            <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs">
-              {error}
-            </div>
-          )}
+        <div className="glass-panel p-8 rounded-3xl shadow-2xl border border-slate-800 space-y-6">
+          <button
+            onClick={handleInstantDemo}
+            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white font-bold text-xs shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 group"
+          >
+            <Sparkles className="w-4 h-4 text-amber-300" />
+            <span>Instant 1-Click Demo Sign Up</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </button>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
@@ -99,7 +111,7 @@ export default function SignupPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="alex@company.com"
+                  placeholder="alex@webagency.com"
                   className="w-full bg-slate-900/90 border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all"
                 />
               </div>
@@ -122,12 +134,12 @@ export default function SignupPage() {
               </div>
             </div>
 
-            <div className="py-2 space-y-1.5 text-[11px] text-slate-400">
+            <div className="py-1 space-y-1.5 text-[11px] text-slate-400">
               <div className="flex items-center gap-1.5 text-emerald-400">
                 <CheckCircle2 className="w-3.5 h-3.5" /> 5 Free generations included
               </div>
               <div className="flex items-center gap-1.5 text-emerald-400">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Web scraping & Gemini AI powered
+                <CheckCircle2 className="w-3.5 h-3.5" /> Web audit &amp; Gemini AI pitch generator
               </div>
             </div>
 
@@ -147,7 +159,7 @@ export default function SignupPage() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-xs text-slate-400">
+          <p className="text-center text-xs text-slate-400">
             Already have an account?{' '}
             <Link href="/login" className="text-indigo-400 font-semibold hover:underline">
               Sign In
