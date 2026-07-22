@@ -169,10 +169,10 @@ export default function GeneratePage() {
             <span className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-400">
               <Sparkles className="w-5 h-5" />
             </span>
-            <h1 className="text-2xl font-black text-white">Website Redesign Proposal AI</h1>
+            <h1 className="text-2xl font-black text-white">Website Redesign Pitch Generator</h1>
           </div>
           <p className="text-xs text-slate-400">
-            ターゲットサイトのURLを入力。AIがデザインの古さ・モバイル対応・CTAの課題を分析し、高成約率な英文リニューアル提案メールを自動生成します。
+            Enter target prospect website URLs. AI analyzes mobile layout flaws &amp; CTA friction, generating 3 high-converting English proposal drafts per site.
           </p>
         </div>
 
