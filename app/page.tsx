@@ -185,8 +185,15 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 py-8 px-8 text-center text-xs text-slate-500">
-        <p>© 2026 OutreachIntelligence AI. All rights reserved.</p>
+      <footer className="border-t border-slate-800 py-8 px-8 text-xs text-slate-500">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p>© 2026 OutreachIntelligence AI. All rights reserved.</p>
+          <div className="flex items-center gap-6">
+            <Link href="/terms" className="hover:text-slate-300 transition-colors">利用規約</Link>
+            <Link href="/privacy" className="hover:text-slate-300 transition-colors">プライバシーポリシー</Link>
+            <Link href="/legal" className="hover:text-slate-300 transition-colors">特定商取引法に基づく表記</Link>
+          </div>
+        </div>
       </footer>
     </div>
   );
