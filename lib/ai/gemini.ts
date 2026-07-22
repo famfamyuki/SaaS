@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { ScrapedPageContent } from '../scraper/web-scraper';
-import { buildGeminiOutreachPrompt } from './prompts';
+import { buildGeminiWebsiteRedesignPrompt } from './prompts';
 
 export interface GeneratedLeadResult {
   company_name: string;
@@ -25,15 +25,15 @@ export interface GeneratedLeadResult {
 
 export async function generateOutreachWithGemini(
   scrapedData: ScrapedPageContent,
-  userOffer: string,
+  userOffer: string = 'High-converting modern website redesign, UI/UX optimization, and mobile-first performance upgrades',
   targetTone: string = 'Professional'
 ): Promise<GeneratedLeadResult> {
   const apiKey = process.env.GEMINI_API_KEY || '';
 
   // Fallback if API key is missing or dummy
   if (!apiKey || apiKey.includes('your-gemini') || apiKey.includes('mock-gemini')) {
-    console.log('[Gemini Engine] Using intelligent fallback generator (API Key unconfigured or mock)');
-    return generateFallbackOutreach(scrapedData, userOffer, targetTone);
+    console.log('[Gemini Engine] Using intelligent Website Redesign fallback generator');
+    return generateFallbackRedesignOutreach(scrapedData, userOffer, targetTone);
   }
 
   try {
@@ -46,7 +46,7 @@ export async function generateOutreachWithGemini(
       } 
     });
 
-    const prompt = buildGeminiOutreachPrompt(scrapedData, userOffer, targetTone);
+    const prompt = buildGeminiWebsiteRedesignPrompt(scrapedData, userOffer, targetTone);
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
 
@@ -55,42 +55,41 @@ export async function generateOutreachWithGemini(
 
     return parsed;
   } catch (err: any) {
-    console.warn(`[Gemini Error] ${err.message}. Falling back to dynamic copy generation.`);
-    return generateFallbackOutreach(scrapedData, userOffer, targetTone);
+    console.warn(`[Gemini Error] ${err.message}. Falling back to dynamic Redesign Proposal copy.`);
+    return generateFallbackRedesignOutreach(scrapedData, userOffer, targetTone);
   }
 }
 
-function generateFallbackOutreach(
+function generateFallbackRedesignOutreach(
   scraped: ScrapedPageContent,
   offer: string,
   tone: string
 ): GeneratedLeadResult {
   const compName = scraped.title.split('-')[0].split('|')[0].trim() || scraped.domain.split('.')[0];
   const capitalized = compName.charAt(0).toUpperCase() + compName.slice(1);
-  const cleanOffer = offer || 'our automated growth and conversion optimization platform';
 
   return {
     company_name: capitalized,
-    summary: `${capitalized} (${scraped.domain}) delivers ${scraped.description || 'digital services and enterprise software solutions'}.`,
+    summary: `${capitalized} (${scraped.domain}) provides ${scraped.description || 'business services'}, but its website design exhibits mobile layout friction and unoptimized conversion CTA paths.`,
     pain_points: [
-      `Scaling qualified enterprise inbound leads for ${scraped.domain}`,
-      `Reducing sales cycle friction and increasing outreach reply rates`,
-      `Optimizing customer acquisition costs while expanding in competitive markets`
+      `Outdated mobile responsive layout & navigation friction on ${scraped.domain}`,
+      `Sub-optimal Call-to-Action (CTA) placement causing homepage visitor drop-off`,
+      `Visual hierarchy & typography due for a modern UI/UX redesign`
     ],
     email_draft_1: {
-      subject: `Scaling ${capitalized}'s inbound pipeline with ${cleanOffer.slice(0, 30)}...`,
-      hook: `Saw ${capitalized}'s recent focus on "${scraped.h1[0] || scraped.title}".`,
-      body: `Hi Alex,\n\nNotice how teams at ${capitalized} are scaling rapidly. Often, expanding market presence introduces friction in converting high-intent leads.\n\nWe built ${cleanOffer} to help teams like yours increase outbound reply rates by 2.4x without adding SDR headcount.\n\nWould you be open to a quick 10-minute preview next Tuesday?`
+      subject: `Quick design teardown & redesign concept for ${scraped.domain}`,
+      hook: `Noticed ${capitalized}'s current homepage layout while researching high-growth companies in your space.`,
+      body: `Hi Alex,\n\nI was checking out ${scraped.domain} and noticed a few quick UI/UX optimization opportunities—specifically around mobile navigation responsiveness and primary CTA placement.\n\nOur team specializes in high-converting website redesigns that modernize brand aesthetics while increasing conversion rates by 30-50%.\n\nWe put together a quick 3-slide redesign mockup for ${capitalized}. Would you be open to taking a look?`
     },
     email_draft_2: {
-      subject: `Quick idea for ${capitalized}`,
-      hook: `Loved the layout and messaging on ${scraped.domain}!`,
-      body: `Hi Alex,\n\nQuick question—are you currently testing new channels to optimize ${capitalized}'s enterprise pipeline?\n\nOur platform plugs directly into your existing workflow with ${cleanOffer}.\n\nWorth a brief 5-min chat this week?`
+      subject: `Website redesign idea for ${capitalized}`,
+      hook: `Quick note regarding ${capitalized}'s current website UX.`,
+      body: `Hi Alex,\n\nQuick question: Are you planning any website UI/UX updates for ${scraped.domain} this quarter?\n\nWe recently redesigned a site in your industry, resulting in a 42% bump in inbound lead inquiries within 30 days.\n\nI'd love to share a free 5-minute video teardown of ${scraped.domain}. Up for a quick look?`
     },
     email_draft_3: {
-      subject: `Case study: How we helped a peer of ${capitalized} boost ROI by 35%`,
-      hook: `Impressive growth trajectory at ${capitalized}!`,
-      body: `Hey Alex,\n\nWe recently helped a B2B platform similar to ${capitalized} overcome outbound fatigue and generate 42 new qualified demos in 30 days.\n\nCould I send over a quick 2-page teardown tailored for ${capitalized}?`
+      subject: `Modernizing ${capitalized}'s web conversion flow`,
+      hook: `Huge fan of ${capitalized}'s work, but saw an opportunity to double your website lead capture.`,
+      body: `Hey Alex,\n\nMost B2B websites lose over 60% of potential inbound leads due to subtle UX friction on mobile devices and weak CTA contrast.\n\nWe specialize in rebuilding websites for growing brands—turning static sites into high-performing customer acquisition engines.\n\nCould I send over a complimentary website audit & redesign concept tailored for ${capitalized}?`
     }
   };
 }

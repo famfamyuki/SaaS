@@ -69,7 +69,7 @@ export function Sidebar() {
               Outreach<span className="gradient-text">Intel</span>
             </h1>
             <span className="text-[10px] uppercase font-semibold tracking-wider text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/20">
-              AI Sales Suite
+              Web Agency AI
             </span>
           </div>
         </div>

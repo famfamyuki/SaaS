@@ -1,44 +1,45 @@
 import { ScrapedPageContent } from '../scraper/web-scraper';
 
-export function buildGeminiOutreachPrompt(
+export function buildGeminiWebsiteRedesignPrompt(
   scrapedData: ScrapedPageContent,
-  userOffer: string,
+  userOffer: string = 'High-converting modern website redesign, UI/UX optimization, and mobile-first performance upgrades',
   targetTone: string = 'Professional'
 ): string {
   return `
-You are an elite B2B sales copywriter and enterprise intelligence analyst.
+You are a world-class B2B Sales Director & UI/UX Audit Specialist working for a top-tier Web Design Agency.
 
-Analyze the following scraped target company website content and construct a high-converting personalized cold email package.
+Your task is to analyze the following scraped prospect website and craft a compelling, high-converting WEBSITE REDESIGN COLD OUTREACH PROPOSAL package.
 
-### TARGET COMPANY SCRAPED DATA:
+### PROSPECT WEBSITE AUDIT DATA:
 - Website URL: ${scrapedData.url}
-- Company Domain: ${scrapedData.domain}
+- Domain: ${scrapedData.domain}
 - Page Title: ${scrapedData.title}
 - Meta Description: ${scrapedData.description}
 - Key Headers (H1/H2): ${[...scrapedData.h1, ...scrapedData.h2].join(' | ')}
-- About / Content Text: ${scrapedData.aboutText.slice(0, 1200)}
+- Page Body Snippet: ${scrapedData.aboutText.slice(0, 1200)}
 
-### MY PRODUCT / VALUE PROPOSITION (WHAT I AM SELLING):
-"${userOffer || 'AI-driven workflow automation to increase sales conversion and reduce operational churn'}"
+### MY AGENCY VALUE PROPOSITION (WHAT I OFFER):
+"${userOffer || 'High-converting modern website redesigns, UI/UX optimization, mobile responsiveness, and conversion-focused landing pages'}"
 
-### TARGET TONE OF VOICE:
-"${targetTone}" (e.g. Casual, Professional, Direct, Witty, High-Energy)
+### OUTREACH TONE:
+"${targetTone}" (e.g., Professional, Consultative, Direct, High-Value)
 
 ---
 
-### REQUIRED INSTRUCTIONS:
-1. Extract the actual or inferred **Company Name** (e.g., "Stripe", "Vercel", "Acme Corp").
-2. Write a concise **Company Summary** (1-2 sentences summarizing what they do).
-3. Identify **3 Specific Pain Points or Growth Challenges** this target company likely faces based on their domain and industry.
-4. Craft **3 Distinct Personalised Cold Email Variations**:
-   - **Draft 1 (Problem-Agitation-Solution)**: Focus on solving a key pain point.
-   - **Draft 2 (Short & Direct)**: 3-4 sentence low-friction outreach for busy executives.
-   - **Draft 3 (Case Study / Social Proof Hook)**: Emphasize ROI & specific metrics.
+### SPECIFIC AUDIT & PROPOSAL INSTRUCTIONS:
+1. Identify the **Company Name** from domain/content (e.g. "Acme Corp", "Stripe").
+2. Write a 1-2 sentence **Company Summary** describing their business and current web presence.
+3. Perform a Website Design Audit & Identify **3 Specific Website Pain Points / Redesign Opportunities**:
+   - Issue 1: Mobile responsiveness & outdated UI/layout aesthetics.
+   - Issue 2: Weak Call-To-Action (CTA), low conversion path, or unoptimized header hierarchy.
+   - Issue 3: Page load/UX friction, lack of social proof, or outdated visual typography.
+4. Generate **3 High-Converting Cold Email Variations in ENGLISH** designed to book website redesign consultation calls:
+   - **Draft 1 (Audit & Friction Teardown)**: Highlight specific design/UX friction points found on their site and how a redesign will boost conversions.
+   - **Draft 2 (Short & Direct Executive Pitch)**: A 4-sentence high-impact email proposing a free 5-minute custom redesign mockup.
+   - **Draft 3 (Case Study / ROI Focus)**: Focus on how modernizing their UI/UX and mobile conversion flow directly increases revenue and leads.
 
-Each draft must contain:
-- \`subject\`: Compelling, non-spammy subject line (under 8 words).
-- \`hook\`: A hyper-personalized opening line referencing their specific website content or headers.
-- \`body\`: Complete cold email body with greeting, hook, pitch, clear low-friction Call To Action (CTA), and professional sign-off placeholder.
+CRITICAL REQUIREMENT:
+All email subject lines, hooks, and body copy MUST be generated in fluent, high-converting ENGLISH.
 
 ---
 
@@ -47,26 +48,26 @@ You MUST return ONLY a valid JSON object matching this exact JSON schema:
 
 {
   "company_name": "Target Company Name",
-  "summary": "Concise company summary text.",
+  "summary": "Concise company & website summary.",
   "pain_points": [
-    "Pain point 1",
-    "Pain point 2",
-    "Pain point 3"
+    "Outdated mobile layout & responsive navigation friction",
+    "Sub-optimal CTA placement causing high homepage bounce rate",
+    "Visual typography and visual hierarchy due for a modern redesign"
   ],
   "email_draft_1": {
-    "subject": "Subject line 1",
-    "hook": "Opening personalized hook 1",
-    "body": "Full body text 1"
+    "subject": "Quick design breakdown for ${scrapedData.domain}",
+    "hook": "Opening personalized hook referencing specific website header or layout.",
+    "body": "Full body text of Draft 1 in English."
   },
   "email_draft_2": {
-    "subject": "Subject line 2",
-    "hook": "Opening personalized hook 2",
-    "body": "Full body text 2"
+    "subject": "Website redesign idea for ${scrapedData.domain}",
+    "hook": "Opening short hook.",
+    "body": "Full body text of Draft 2 in English."
   },
   "email_draft_3": {
-    "subject": "Subject line 3",
-    "hook": "Opening personalized hook 3",
-    "body": "Full body text 3"
+    "subject": "Modernizing ${scrapedData.domain}'s web conversion flow",
+    "hook": "Opening case study hook.",
+    "body": "Full body text of Draft 3 in English."
   }
 }
 `;

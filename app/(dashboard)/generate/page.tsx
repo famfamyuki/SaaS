@@ -35,7 +35,7 @@ export default function GeneratePage() {
   const [urlInput, setUrlInput] = React.useState('https://stripe.com\nhttps://vercel.com');
   const [targetTone, setTargetTone] = React.useState('Professional');
   const [valueProp, setValueProp] = React.useState(
-    'AI-powered payment routing & authorization rate optimization for digital platforms.'
+    'High-converting modern website redesign, UI/UX optimization, and mobile responsiveness upgrades for scaling B2B brands.'
   );
 
   const [loading, setLoading] = React.useState(false);
@@ -169,10 +169,10 @@ export default function GeneratePage() {
             <span className="p-1.5 rounded-lg bg-indigo-500/20 text-indigo-400">
               <Sparkles className="w-5 h-5" />
             </span>
-            <h1 className="text-2xl font-black text-white">AI Lead Generator</h1>
+            <h1 className="text-2xl font-black text-white">Website Redesign Proposal AI</h1>
           </div>
           <p className="text-xs text-slate-400">
-            Input prospect website URLs below. Scraper extracts company details & Gemini AI crafts 3 tailored cold emails per domain.
+            ターゲットサイトのURLを入力。AIがデザインの古さ・モバイル対応・CTAの課題を分析し、高成約率な英文リニューアル提案メールを自動生成します。
           </p>
         </div>
 
