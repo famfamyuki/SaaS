@@ -7,7 +7,8 @@ import {
   Check, 
   Sparkles, 
   ArrowRight, 
-  CheckCircle2
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { MockStore } from '@/lib/supabase/mock-store';
 import { UserProfile } from '@/lib/supabase/types';
@@ -17,41 +18,42 @@ function BillingContent() {
   const [user, setUser] = React.useState<UserProfile | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [toastMessage, setToastMessage] = React.useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const u = MockStore.getUser();
     setUser(u);
 
     if (searchParams.get('success') === 'true') {
-      const updated = MockStore.updateUser({
-        subscription_status: 'pro',
-        credits_remaining: 500,
-      });
-      setUser(updated);
-      setToastMessage('🎉 Upgrade Successful! 500 Pro credits added to your account.');
+      setToastMessage('🎉 Payment Submitted! Stripe is confirming your subscription. Pro credits will update upon webhook confirmation.');
+    } else if (searchParams.get('canceled') === 'true') {
+      setErrorMessage('Checkout was canceled. No charges were made.');
     }
   }, [searchParams]);
 
   const handleSubscribePro = async () => {
     setLoading(true);
+    setErrorMessage(null);
     try {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
       });
       const data = await res.json();
 
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Failed to initialize Stripe checkout session');
+      }
+
       if (data.url) {
+        // Redirect browser to official Stripe Checkout page
         window.location.href = data.url;
       } else {
-        const updated = MockStore.updateUser({
-          subscription_status: 'pro',
-          credits_remaining: 500,
-        });
-        setUser(updated);
-        setToastMessage('🎉 Demo Subscription Activated! You now have 500 credits.');
+        throw new Error('Stripe Checkout URL was not returned by server');
       }
     } catch (err: any) {
-      console.error(err);
+      console.error('[Stripe Checkout Button Error]:', err);
+      setErrorMessage(err.message || 'Payment checkout initialization failed.');
     } finally {
       setLoading(false);
     }
@@ -75,6 +77,21 @@ function BillingContent() {
         </div>
       )}
 
+      {errorMessage && (
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center justify-between shadow-xl">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-rose-400" />
+            <span>{errorMessage}</span>
+          </div>
+          <button 
+            onClick={() => setErrorMessage(null)}
+            className="text-rose-400 hover:text-rose-200 text-xs font-bold"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Header Banner */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-gradient-to-r from-slate-900 via-indigo-950/50 to-purple-950/50 p-6 rounded-3xl border border-slate-800 shadow-xl">
         <div>
@@ -82,10 +99,10 @@ function BillingContent() {
             <span className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400">
               <CreditCard className="w-5 h-5" />
             </span>
-            <h1 className="text-2xl font-black text-white">Subscription & Credit Plans</h1>
+            <h1 className="text-2xl font-black text-white">Subscription &amp; Credit Plans</h1>
           </div>
           <p className="text-xs text-slate-400">
-            Flexible monthly plans and credit packages tailored for growing sales teams.
+            Flexible monthly plans and credit packages tailored for growing web design agencies &amp; freelancers.
           </p>
         </div>
 
@@ -109,7 +126,7 @@ function BillingContent() {
             </div>
             <div>
               <h3 className="text-3xl font-black text-white">$0 <span className="text-xs font-normal text-slate-400">/ forever</span></h3>
-              <p className="text-xs text-slate-400 mt-1">Perfect for trying out our website scraper & Gemini AI engine.</p>
+              <p className="text-xs text-slate-400 mt-1">Perfect for trying out our website audit &amp; AI prompt engine.</p>
             </div>
 
             <div className="pt-4 border-t border-slate-800 space-y-3 text-xs text-slate-300">
@@ -119,11 +136,11 @@ function BillingContent() {
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-400" />
-                <span>Automated Website Scraper</span>
+                <span>Automated Web UX Audit Scraper</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-400" />
-                <span>3 AI Cold Email Drafts per URL</span>
+                <span>3 AI Cold Email Proposals per Site</span>
               </div>
               <div className="flex items-center gap-2 text-slate-500">
                 <Check className="w-4 h-4 text-slate-600" />
@@ -148,11 +165,11 @@ function BillingContent() {
 
           <div className="space-y-4">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold border border-indigo-500/30">
-              <Sparkles className="w-3.5 h-3.5 text-pink-400" /> Pro Unlimited Sales
+              <Sparkles className="w-3.5 h-3.5 text-pink-400" /> Pro Agency Retainer
             </div>
             <div>
               <h3 className="text-4xl font-black text-white">$49 <span className="text-xs font-normal text-slate-400">/ month</span></h3>
-              <p className="text-xs text-slate-400 mt-1">For high-performing SDRs and B2B growth teams.</p>
+              <p className="text-xs text-slate-400 mt-1">For active web design agencies and freelancers.</p>
             </div>
 
             <div className="pt-4 border-t border-slate-800 space-y-3 text-xs text-slate-200">
@@ -162,11 +179,11 @@ function BillingContent() {
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-400" />
-                <span>Priority Cheerio Web Scraper</span>
+                <span>Priority Website Audit Scraper</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-400" />
-                <span>Gemini 1.5 Pro AI Sales Copilot</span>
+                <span>Gemini 1.5 Pro AI Pitch Copilot</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-400" />
@@ -174,7 +191,7 @@ function BillingContent() {
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-emerald-400" />
-                <span>Custom Target Tone Preferences</span>
+                <span>Custom Outreach Tone Preferences</span>
               </div>
             </div>
           </div>
@@ -187,7 +204,7 @@ function BillingContent() {
             {user?.subscription_status === 'pro' ? (
               <span>Plan Active (500 Credits)</span>
             ) : loading ? (
-              <span>Connecting to Stripe...</span>
+              <span>Redirecting to Stripe Checkout...</span>
             ) : (
               <>
                 <span>Upgrade to Pro ($49/mo)</span>

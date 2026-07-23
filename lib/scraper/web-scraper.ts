@@ -13,13 +13,61 @@ export interface ScrapedPageContent {
   error?: string;
 }
 
-export async function scrapeTargetWebsite(targetUrl: string): Promise<ScrapedPageContent> {
-  // Clean & normalize URL format
-  let normalizedUrl = targetUrl.trim();
-  if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
-    normalizedUrl = 'https://' + normalizedUrl;
+/**
+ * SSRF & Malicious Hostname Input Validation Guard
+ */
+export function validateAndSanitizeUrl(inputUrl: string): { isValid: boolean; sanitizedUrl?: string; error?: string } {
+  if (!inputUrl || typeof inputUrl !== 'string') {
+    return { isValid: false, error: 'URL input is empty or invalid' };
   }
 
+  let trimmed = inputUrl.trim();
+  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+    trimmed = 'https://' + trimmed;
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    const hostname = parsed.hostname.toLowerCase();
+
+    // Protocol check
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return { isValid: false, error: 'Only HTTP and HTTPS protocols are allowed' };
+    }
+
+    // SSRF Private IP & Internal Hostname Blacklist Check
+    const privateIpPatterns = [
+      /^localhost$/i,
+      /^127\.\d+\.\d+\.\d+$/,
+      /^0\.\d+\.\d+\.\d+$/,
+      /^10\.\d+\.\d+\.\d+$/,
+      /^192\.168\.\d+\.\d+$/,
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+$/,
+      /^169\.254\.\d+\.\d+$/, // AWS / GCP Metadata Service
+      /\.internal$/i,
+      /\.local$/i,
+      /\.lan$/i,
+    ];
+
+    for (const pattern of privateIpPatterns) {
+      if (pattern.test(hostname)) {
+        return { isValid: false, error: `Access to internal/private hostname '${hostname}' is prohibited` };
+      }
+    }
+
+    return { isValid: true, sanitizedUrl: parsed.toString() };
+  } catch (e) {
+    return { isValid: false, error: 'Malformed URL format' };
+  }
+}
+
+export async function scrapeTargetWebsite(targetUrl: string): Promise<ScrapedPageContent> {
+  const validation = validateAndSanitizeUrl(targetUrl);
+  if (!validation.isValid || !validation.sanitizedUrl) {
+    throw new Error(validation.error || 'Invalid target URL');
+  }
+
+  const normalizedUrl = validation.sanitizedUrl;
   let domain = 'example.com';
   try {
     const urlObj = new URL(normalizedUrl);
@@ -70,7 +118,6 @@ export async function scrapeTargetWebsite(targetUrl: string): Promise<ScrapedPag
       if (text && text.length > 3 && h2.length < 8) h2.push(text);
     });
 
-    // Extract About or main section text
     let aboutText = '';
     $('[class*="about"], [id*="about"], section, article, p').each((_, el) => {
       const txt = $(el).text().replace(/\s+/g, ' ').trim();
@@ -95,17 +142,16 @@ export async function scrapeTargetWebsite(targetUrl: string): Promise<ScrapedPag
   } catch (err: any) {
     console.warn(`[Scraper Warning] Failed to scrape ${normalizedUrl}: ${err.message}. Using intelligent domain extraction.`);
     
-    // Generate clean fallback scraped page metadata
     const capitalizedName = domain.split('.')[0].charAt(0).toUpperCase() + domain.split('.')[0].slice(1);
     return {
       url: normalizedUrl,
       domain,
       title: `${capitalizedName} - Official Website`,
-      description: `${capitalizedName} provides innovative B2B software & technology solutions to optimize operations and drive revenue growth.`,
-      h1: [`Transform your business with ${capitalizedName}`],
-      h2: ['Key Features & Platform Capabilities', 'Why Enterprise Teams Choose Us'],
-      aboutText: `${capitalizedName} is a leading digital platform designed to streamline workflows, improve team collaboration, and accelerate enterprise efficiency.`,
-      bodySnippet: `${capitalizedName} enterprise software solutions for modern teams.`,
+      description: `${capitalizedName} provides digital services and technology solutions.`,
+      h1: [`Transform your digital web presence with ${capitalizedName}`],
+      h2: ['Key Features & Services', 'Why Clients Choose Us'],
+      aboutText: `${capitalizedName} is a growing business focused on delivering high quality solutions to its customers.`,
+      bodySnippet: `${capitalizedName} official web portal.`,
       success: true,
       error: err.message,
     };
