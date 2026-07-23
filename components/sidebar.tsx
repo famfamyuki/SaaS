@@ -52,8 +52,8 @@ export function Sidebar() {
 
   React.useEffect(() => {
     const user = MockStore.getUser();
-    setCredits(user.credits_remaining);
-    setSubscription(user.subscription_status);
+    setCredits(user?.credits_remaining ?? 5);
+    setSubscription(user?.subscription_status ?? 'free');
   }, [pathname]);
 
   return (

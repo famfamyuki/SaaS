@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import { 
@@ -11,10 +13,21 @@ import {
   FileSpreadsheet, 
   Cpu,
   Palette,
-  CheckCircle2
+  CheckCircle2,
+  LogIn,
+  UserPlus
 } from 'lucide-react';
+import { AuthModal } from '@/components/auth-modal';
 
 export default function LandingPage() {
+  const [authModalOpen, setAuthModalOpen] = React.useState(false);
+  const [authMode, setAuthMode] = React.useState<'login' | 'signup'>('login');
+
+  const openAuth = (mode: 'login' | 'signup') => {
+    setAuthMode(mode);
+    setAuthModalOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 relative overflow-hidden">
       {/* Dynamic Background Effects */}
@@ -37,20 +50,21 @@ export default function LandingPage() {
           <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
         </div>
 
-        <div className="flex items-center gap-4">
-          <Link 
-            href="/login"
-            className="text-sm font-semibold text-slate-300 hover:text-white px-4 py-2 rounded-xl transition-colors"
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => openAuth('login')}
+            className="text-xs font-semibold text-slate-300 hover:text-white px-4 py-2 rounded-xl hover:bg-slate-900 border border-transparent hover:border-slate-800 transition-all flex items-center gap-1.5"
           >
-            Sign In
-          </Link>
-          <Link 
-            href="/dashboard"
-            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white text-sm font-semibold shadow-lg shadow-indigo-600/25 transition-all flex items-center gap-2"
+            <LogIn className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Sign In</span>
+          </button>
+          <button 
+            onClick={() => openAuth('signup')}
+            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white text-xs font-semibold shadow-lg shadow-indigo-600/25 transition-all flex items-center gap-1.5"
           >
-            <span>Launch Platform</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>Sign Up</span>
+          </button>
         </div>
       </nav>
 
@@ -71,13 +85,13 @@ export default function LandingPage() {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-          <Link 
-            href="/dashboard"
+          <button 
+            onClick={() => openAuth('signup')}
             className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white font-bold text-base shadow-xl shadow-indigo-500/30 hover:scale-[1.02] transition-all flex items-center justify-center gap-3"
           >
             <span>Start Free Trial (5 Credits Included)</span>
             <ArrowRight className="w-5 h-5" />
-          </Link>
+          </button>
           <a
             href="#features"
             className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-slate-200 font-semibold text-base transition-all flex items-center justify-center gap-2"
@@ -205,9 +219,12 @@ export default function LandingPage() {
               <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Automated website flaw detector</li>
               <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> 3 English email variations per site</li>
             </ul>
-            <Link href="/dashboard" className="block text-center py-3 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-white font-semibold text-xs">
+            <button 
+              onClick={() => openAuth('signup')}
+              className="w-full text-center py-3 rounded-xl bg-slate-900 hover:bg-slate-850 border border-slate-800 text-white font-semibold text-xs transition-all"
+            >
               Get Started Free
-            </Link>
+            </button>
           </div>
 
           {/* Pro Tier */}
@@ -223,9 +240,12 @@ export default function LandingPage() {
               <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Gemini 1.5 Pro AI engine</li>
               <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-400" /> Unlimited 1-Click CSV exports</li>
             </ul>
-            <Link href="/dashboard" className="block text-center py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white font-bold text-xs shadow-lg shadow-indigo-600/30">
+            <button 
+              onClick={() => openAuth('signup')}
+              className="w-full text-center py-3 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all"
+            >
               Upgrade to Pro Plan ($49/mo)
-            </Link>
+            </button>
           </div>
         </div>
       </section>
@@ -241,6 +261,12 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialMode={authMode}
+      />
     </div>
   );
 }

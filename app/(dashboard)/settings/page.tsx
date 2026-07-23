@@ -13,7 +13,7 @@ export default function SettingsPage() {
   React.useEffect(() => {
     const u = MockStore.getUser();
     setUser(u);
-    setFullName(u.full_name || '');
+    setFullName(u?.full_name || '');
   }, []);
 
   const handleSave = (e: React.FormEvent) => {

@@ -1,20 +1,9 @@
 import { Lead, UserProfile } from './types';
 
-const INITIAL_MOCK_USER: UserProfile = {
-  id: 'user-free-default',
-  email: 'alex.sales@outreachintel.ai',
-  full_name: 'Alex Vance',
-  stripe_customer_id: null,
-  subscription_status: 'free',
-  credits_remaining: 5,
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-};
-
 const INITIAL_MOCK_LEADS: Lead[] = [
   {
     id: 'lead-001',
-    user_id: 'user-free-default',
+    user_id: 'sample-user-id',
     website_url: 'https://stripe.com',
     company_name: 'Stripe',
     summary: 'Financial infrastructure platform for software and internet businesses handling payments and billing globally.',
@@ -45,7 +34,7 @@ const INITIAL_MOCK_LEADS: Lead[] = [
   },
   {
     id: 'lead-002',
-    user_id: 'user-free-default',
+    user_id: 'sample-user-id',
     website_url: 'https://vercel.com',
     company_name: 'Vercel',
     summary: 'Frontend cloud platform enabling developer teams to deploy Next.js apps with instant global CDN and serverless compute.',
@@ -77,33 +66,34 @@ const INITIAL_MOCK_LEADS: Lead[] = [
 ];
 
 export class MockStore {
-  static getUser(): UserProfile {
-    if (typeof window === 'undefined') return INITIAL_MOCK_USER;
+  /**
+   * Returns current authenticated user or null if unauthenticated (Guest state).
+   * Automatically purges legacy hardcoded mock users (Alex Vance / demo-user-123).
+   */
+  static getUser(): UserProfile | null {
+    if (typeof window === 'undefined') return null;
     const stored = localStorage.getItem('outreach_mock_user');
-    if (!stored) {
-      localStorage.setItem('outreach_mock_user', JSON.stringify(INITIAL_MOCK_USER));
-      return INITIAL_MOCK_USER;
-    }
+    if (!stored) return null;
+
     try {
       const parsed: UserProfile = JSON.parse(stored);
-      // Auto-purge legacy unconfirmed Pro status entries
-      if (parsed.subscription_status === 'pro' && (!parsed.stripe_customer_id || parsed.stripe_customer_id === 'cus_demo_123' || parsed.stripe_customer_id === 'cus_stripe_mock')) {
-        console.log('[Security Sanitizer] Resetting legacy mock user subscription status back to Free.');
-        parsed.subscription_status = 'free';
-        parsed.credits_remaining = 5;
-        localStorage.setItem('outreach_mock_user', JSON.stringify(parsed));
-      }
 
-      // Auto-replenish 5 initial free credits if existing free testing account is stuck at 0
-      if (parsed.subscription_status === 'free' && (parsed.credits_remaining === undefined || parsed.credits_remaining <= 0)) {
-        parsed.credits_remaining = 5;
-        localStorage.setItem('outreach_mock_user', JSON.stringify(parsed));
+      // Auto-purge hardcoded dummy user "Alex Vance" or legacy mock IDs
+      if (
+        parsed.id === 'user-free-default' ||
+        parsed.id === 'demo-user-123' ||
+        parsed.email === 'alex.sales@outreachintel.ai' ||
+        parsed.full_name === 'Alex Vance'
+      ) {
+        console.log('[Auth Guard] Purging hardcoded dummy user Alex Vance. Transitioning to Guest state.');
+        localStorage.removeItem('outreach_mock_user');
+        return null;
       }
 
       return parsed;
     } catch (e) {
-      localStorage.setItem('outreach_mock_user', JSON.stringify(INITIAL_MOCK_USER));
-      return INITIAL_MOCK_USER;
+      localStorage.removeItem('outreach_mock_user');
+      return null;
     }
   }
 
@@ -120,13 +110,25 @@ export class MockStore {
     };
     if (typeof window !== 'undefined') {
       localStorage.setItem('outreach_mock_user', JSON.stringify(freshUser));
+      window.dispatchEvent(new Event('user-credits-updated'));
     }
     return freshUser;
   }
 
   static updateUser(updates: Partial<UserProfile>): UserProfile {
     const current = this.getUser();
-    const updated = { ...current, ...updates, updated_at: new Date().toISOString() };
+    const updated: UserProfile = {
+      id: current?.id || 'user-' + Date.now(),
+      email: current?.email || updates.email || 'user@webagency.com',
+      full_name: current?.full_name || updates.full_name || 'Web Designer',
+      stripe_customer_id: updates.stripe_customer_id ?? current?.stripe_customer_id ?? null,
+      subscription_status: updates.subscription_status || current?.subscription_status || 'free',
+      credits_remaining: updates.credits_remaining ?? current?.credits_remaining ?? 5,
+      created_at: current?.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      ...updates,
+    };
+
     if (typeof window !== 'undefined') {
       localStorage.setItem('outreach_mock_user', JSON.stringify(updated));
       window.dispatchEvent(new Event('user-credits-updated'));
@@ -134,9 +136,16 @@ export class MockStore {
     return updated;
   }
 
+  static clearUser(): void {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('outreach_mock_user');
+      window.dispatchEvent(new Event('user-credits-updated'));
+    }
+  }
+
   static deductCredit(): { success: boolean; creditsRemaining: number } {
     const user = this.getUser();
-    if (user.credits_remaining <= 0) {
+    if (!user || user.credits_remaining <= 0) {
       return { success: false, creditsRemaining: 0 };
     }
     const updated = this.updateUser({ credits_remaining: user.credits_remaining - 1 });
