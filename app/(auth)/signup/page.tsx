@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Zap, Mail, Lock, User, ArrowRight, CheckCircle2, Sparkles } from 'lucide-react';
+import { Zap, Mail, Lock, User, ArrowRight, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
 import { createBrowserSupabaseClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { MockStore } from '@/lib/supabase/mock-store';
 
@@ -13,28 +13,24 @@ export default function SignupPage() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [loading, setLoading] = React.useState(false);
-
-  const handleSignupSuccess = (userEmail: string, name?: string) => {
-    MockStore.updateUser({
-      email: userEmail || 'alex.designer@webagency.com',
-      full_name: name || fullName || 'Alex Vance',
-      credits_remaining: 5,
-    });
-    router.push('/dashboard');
-  };
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = React.useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMsg(null);
+    setSuccessMsg(null);
 
     if (!isSupabaseConfigured()) {
-      handleSignupSuccess(email, fullName);
+      MockStore.resetUserToFree(email, fullName);
+      router.push('/dashboard');
       return;
     }
 
     try {
       const supabase = createBrowserSupabaseClient();
-      const { data } = await supabase.auth.signUp({
+      const { data, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -44,15 +40,28 @@ export default function SignupPage() {
         },
       });
 
-      handleSignupSuccess(data.user?.email || email, fullName);
-    } catch (err) {
-      handleSignupSuccess(email, fullName);
+      if (signUpError) {
+        throw new Error(signUpError.message || 'Failed to create account. Please check your inputs.');
+      }
+
+      if (data.session) {
+        MockStore.resetUserToFree(data.user?.email || email, fullName);
+        router.push('/dashboard');
+      } else {
+        // Email confirmation flow
+        setSuccessMsg('🎉 Account registered successfully! Please check your email inbox to confirm your address before logging in.');
+        setLoading(false);
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Account registration failed');
+      setLoading(false);
     }
   };
 
-  const handleInstantDemo = () => {
+  const handleSandboxDemo = () => {
     setLoading(true);
-    handleSignupSuccess('new.designer@agency.com', 'Alex Vance');
+    MockStore.resetUserToFree('sandbox.new@webagency.com', 'Sandbox User');
+    router.push('/dashboard');
   };
 
   return (
@@ -64,7 +73,7 @@ export default function SignupPage() {
           <Zap className="w-7 h-7 text-white" />
         </div>
         <h2 className="text-3xl font-extrabold tracking-tight text-white">
-          Get Started with <span className="gradient-text">OutreachIntel</span>
+          Create Your <span className="gradient-text">OutreachIntel</span> Account
         </h2>
         <p className="mt-2 text-sm text-slate-400">
           Claim 5 free AI website audit &amp; proposal generation credits
@@ -73,14 +82,19 @@ export default function SignupPage() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md z-10">
         <div className="glass-panel p-8 rounded-3xl shadow-2xl border border-slate-800 space-y-6">
-          <button
-            onClick={handleInstantDemo}
-            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white font-bold text-xs shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 group"
-          >
-            <Sparkles className="w-4 h-4 text-amber-300" />
-            <span>Instant 1-Click Demo Sign Up</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </button>
+          {errorMsg && (
+            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          {successMsg && (
+            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+              <span>{successMsg}</span>
+            </div>
+          )}
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
@@ -136,10 +150,10 @@ export default function SignupPage() {
 
             <div className="py-1 space-y-1.5 text-[11px] text-slate-400">
               <div className="flex items-center gap-1.5 text-emerald-400">
-                <CheckCircle2 className="w-3.5 h-3.5" /> 5 Free generations included
+                <CheckCircle2 className="w-3.5 h-3.5" /> 5 Free credits included
               </div>
               <div className="flex items-center gap-1.5 text-emerald-400">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Web audit &amp; Gemini AI pitch generator
+                <CheckCircle2 className="w-3.5 h-3.5" /> Automated Web UX Audit &amp; AI Pitch Generator
               </div>
             </div>
 
@@ -149,7 +163,7 @@ export default function SignupPage() {
               className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
             >
               {loading ? (
-                <span>Creating Account...</span>
+                <span>Registering Account...</span>
               ) : (
                 <>
                   <span>Create Free Account</span>
@@ -158,6 +172,17 @@ export default function SignupPage() {
               )}
             </button>
           </form>
+
+          <div className="pt-2 border-t border-slate-800/80 text-center">
+            <button
+              type="button"
+              onClick={handleSandboxDemo}
+              className="text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors inline-flex items-center gap-1.5"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Explore Offline Sandbox Demo Mode</span>
+            </button>
+          </div>
 
           <p className="text-center text-xs text-slate-400">
             Already have an account?{' '}

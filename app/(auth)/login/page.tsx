@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Zap, Mail, Lock, ArrowRight, Sparkles } from 'lucide-react';
+import { Zap, Mail, Lock, ArrowRight, Sparkles, AlertCircle } from 'lucide-react';
 import { createBrowserSupabaseClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { MockStore } from '@/lib/supabase/mock-store';
 
@@ -12,21 +12,22 @@ export default function LoginPage() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [loading, setLoading] = React.useState(false);
-
-  const handleLoginSuccess = (userEmail: string, name?: string) => {
-    MockStore.updateUser({
-      email: userEmail || 'alex.designer@agency.com',
-      full_name: name || userEmail.split('@')[0] || 'Alex Vance',
-    });
-    router.push('/dashboard');
-  };
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMsg(null);
 
+    // If Supabase is not configured, run local sandbox auth
     if (!isSupabaseConfigured()) {
-      handleLoginSuccess(email);
+      MockStore.updateUser({
+        email: email || 'alex.designer@webagency.com',
+        full_name: email.split('@')[0] || 'Alex Vance',
+        subscription_status: 'free',
+        credits_remaining: 5,
+      });
+      router.push('/dashboard');
       return;
     }
 
@@ -38,41 +39,60 @@ export default function LoginPage() {
       });
 
       if (signInError) {
-        // Fallback: try sign up or demo login if user does not exist in Supabase DB yet
-        const { data: signUpData } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-        handleLoginSuccess(email);
-      } else {
-        handleLoginSuccess(data.user?.email || email);
+        // STRICT AUTH ENFORCEMENT: Return exact Supabase authentication error
+        throw new Error(signInError.message || 'Invalid email or password. Please check your credentials.');
       }
+
+      if (!data.user) {
+        throw new Error('Authentication failed. User session could not be established.');
+      }
+
+      // Sync authenticated user state & redirect to dashboard
+      MockStore.updateUser({
+        id: data.user.id,
+        email: data.user.email || email,
+        full_name: data.user.user_metadata?.full_name || email.split('@')[0],
+        subscription_status: 'free', // Default free tier unless confirmed by Stripe webhook
+        credits_remaining: 5,
+      });
+
+      router.push('/dashboard');
     } catch (err: any) {
-      handleLoginSuccess(email);
+      setErrorMsg(err.message || 'Failed to sign in. Please verify your credentials.');
+      setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
+    setErrorMsg(null);
     if (!isSupabaseConfigured()) {
-      handleLoginSuccess('agency.founder@gmail.com', 'Agency Founder');
+      MockStore.updateUser({
+        email: 'agency.founder@gmail.com',
+        full_name: 'Agency Founder',
+        subscription_status: 'free',
+        credits_remaining: 5,
+      });
+      router.push('/dashboard');
       return;
     }
     try {
       const supabase = createBrowserSupabaseClient();
-      await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/api/auth/callback`,
         },
       });
-    } catch (err) {
-      handleLoginSuccess('agency.founder@gmail.com', 'Agency Founder');
+      if (error) throw error;
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to initialize Google OAuth login');
     }
   };
 
-  const handleInstantDemo = () => {
+  const handleSandboxDemo = () => {
     setLoading(true);
-    handleLoginSuccess('demo.designer@webagency.com', 'Alex Vance');
+    MockStore.resetUserToFree('sandbox.demo@webagency.com', 'Sandbox Demo User');
+    router.push('/dashboard');
   };
 
   return (
@@ -86,30 +106,21 @@ export default function LoginPage() {
           <Zap className="w-7 h-7 text-white" />
         </div>
         <h2 className="text-3xl font-extrabold tracking-tight text-white">
-          Welcome back to <span className="gradient-text">OutreachIntel</span>
+          Sign In to <span className="gradient-text">OutreachIntel</span>
         </h2>
         <p className="mt-2 text-sm text-slate-400">
-          Spot website design flaws &amp; generate cold redesign proposals
+          Enter your registered email and password to access your dashboard
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md z-10">
         <div className="glass-panel p-8 rounded-3xl shadow-2xl border border-slate-800 space-y-6">
-          {/* Instant 1-Click Demo Login */}
-          <button
-            onClick={handleInstantDemo}
-            className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white font-bold text-xs shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2 group"
-          >
-            <Sparkles className="w-4 h-4 text-amber-300" />
-            <span>Instant 1-Click Demo Sign In</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </button>
-
-          <div className="flex items-center justify-between text-xs text-slate-400">
-            <div className="h-px bg-slate-800 flex-1" />
-            <span className="px-3">or sign in with email</span>
-            <div className="h-px bg-slate-800 flex-1" />
-          </div>
+          {errorMsg && (
+            <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
@@ -152,10 +163,10 @@ export default function LoginPage() {
               className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:opacity-95 text-white font-semibold text-sm shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
             >
               {loading ? (
-                <span>Signing in...</span>
+                <span>Verifying credentials...</span>
               ) : (
                 <>
-                  <span>Sign In to Dashboard</span>
+                  <span>Sign In</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </>
               )}
@@ -172,8 +183,19 @@ export default function LoginPage() {
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
             </svg>
-            Google Workspace OAuth
+            Sign In with Google
           </button>
+
+          <div className="pt-2 border-t border-slate-800/80 text-center">
+            <button
+              type="button"
+              onClick={handleSandboxDemo}
+              className="text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors inline-flex items-center gap-1.5"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Explore Offline Sandbox Demo Mode</span>
+            </button>
+          </div>
 
           <p className="text-center text-xs text-slate-400">
             Don&apos;t have an account yet?{' '}

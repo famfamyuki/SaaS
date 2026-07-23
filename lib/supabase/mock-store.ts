@@ -1,10 +1,10 @@
 import { Lead, UserProfile } from './types';
 
 const INITIAL_MOCK_USER: UserProfile = {
-  id: 'demo-user-123',
+  id: 'user-free-default',
   email: 'alex.sales@outreachintel.ai',
   full_name: 'Alex Vance',
-  stripe_customer_id: 'cus_demo_123',
+  stripe_customer_id: null,
   subscription_status: 'free',
   credits_remaining: 5,
   created_at: new Date().toISOString(),
@@ -14,7 +14,7 @@ const INITIAL_MOCK_USER: UserProfile = {
 const INITIAL_MOCK_LEADS: Lead[] = [
   {
     id: 'lead-001',
-    user_id: 'demo-user-123',
+    user_id: 'user-free-default',
     website_url: 'https://stripe.com',
     company_name: 'Stripe',
     summary: 'Financial infrastructure platform for software and internet businesses handling payments and billing globally.',
@@ -45,7 +45,7 @@ const INITIAL_MOCK_LEADS: Lead[] = [
   },
   {
     id: 'lead-002',
-    user_id: 'demo-user-123',
+    user_id: 'user-free-default',
     website_url: 'https://vercel.com',
     company_name: 'Vercel',
     summary: 'Frontend cloud platform enabling developer teams to deploy Next.js apps with instant global CDN and serverless compute.',
@@ -84,7 +84,37 @@ export class MockStore {
       localStorage.setItem('outreach_mock_user', JSON.stringify(INITIAL_MOCK_USER));
       return INITIAL_MOCK_USER;
     }
-    return JSON.parse(stored);
+    try {
+      const parsed: UserProfile = JSON.parse(stored);
+      // Auto-purge legacy unconfirmed Pro status entries
+      if (parsed.subscription_status === 'pro' && (!parsed.stripe_customer_id || parsed.stripe_customer_id === 'cus_demo_123' || parsed.stripe_customer_id === 'cus_stripe_mock')) {
+        console.log('[Security Sanitizer] Resetting legacy mock user subscription status back to Free.');
+        parsed.subscription_status = 'free';
+        parsed.credits_remaining = 5;
+        localStorage.setItem('outreach_mock_user', JSON.stringify(parsed));
+      }
+      return parsed;
+    } catch (e) {
+      localStorage.setItem('outreach_mock_user', JSON.stringify(INITIAL_MOCK_USER));
+      return INITIAL_MOCK_USER;
+    }
+  }
+
+  static resetUserToFree(email?: string, name?: string): UserProfile {
+    const freshUser: UserProfile = {
+      id: 'user-' + Date.now(),
+      email: email || 'user@webagency.com',
+      full_name: name || (email ? email.split('@')[0] : 'Web Designer'),
+      stripe_customer_id: null,
+      subscription_status: 'free',
+      credits_remaining: 5,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('outreach_mock_user', JSON.stringify(freshUser));
+    }
+    return freshUser;
   }
 
   static updateUser(updates: Partial<UserProfile>): UserProfile {
@@ -112,7 +142,11 @@ export class MockStore {
       localStorage.setItem('outreach_mock_leads', JSON.stringify(INITIAL_MOCK_LEADS));
       return INITIAL_MOCK_LEADS;
     }
-    return JSON.parse(stored);
+    try {
+      return JSON.parse(stored);
+    } catch (e) {
+      return INITIAL_MOCK_LEADS;
+    }
   }
 
   static addLead(lead: Omit<Lead, 'id' | 'created_at'>): Lead {
