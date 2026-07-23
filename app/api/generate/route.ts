@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 4. Processing Pipelines (Scrape -> Gemini AI -> DB Save -> Deduct Credit)
+    // 4. Processing Pipelines (Scrape -> Gemini AI -> Save -> Deduct Credit On Success)
     const results = [];
 
     for (const targetUrl of validUrls) {
@@ -78,18 +78,6 @@ export async function POST(req: NextRequest) {
         value_proposition,
         target_tone
       );
-
-      // Deduct Credit Server-side
-      if (supabaseAdmin) {
-        await supabaseAdmin
-          .from('users')
-          .update({ credits_remaining: currentCredits - 1 })
-          .eq('id', auth.user.userId);
-        currentCredits -= 1;
-      } else {
-        const creditResult = MockStore.deductCredit();
-        currentCredits = creditResult.creditsRemaining;
-      }
 
       // Save Lead Record
       const leadPayload = {
@@ -117,6 +105,21 @@ export async function POST(req: NextRequest) {
       } else {
         savedLead = MockStore.addLead(leadPayload);
       }
+
+      // EXCEPTION-SAFE DEDUCTION: Only deduct credit upon SUCCESSFUL email lead generation
+      const newBalance = Math.max(0, currentCredits - 1);
+      if (supabaseAdmin) {
+        await supabaseAdmin
+          .from('users')
+          .update({
+            credits_remaining: newBalance,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', auth.user.userId);
+      } else {
+        MockStore.updateUser({ credits_remaining: newBalance });
+      }
+      currentCredits = newBalance;
 
       results.push(savedLead);
     }

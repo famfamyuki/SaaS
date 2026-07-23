@@ -22,7 +22,13 @@ export function Header() {
   const [menuOpen, setMenuOpen] = React.useState(false);
 
   React.useEffect(() => {
-    setUser(MockStore.getUser());
+    const refreshUser = () => setUser(MockStore.getUser());
+    refreshUser();
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('user-credits-updated', refreshUser);
+      return () => window.removeEventListener('user-credits-updated', refreshUser);
+    }
   }, []);
 
   const handleLogout = () => {

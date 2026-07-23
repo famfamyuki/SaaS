@@ -115,6 +115,10 @@ export default function GeneratePage() {
       }
 
       setResults(data.leads || []);
+
+      if (data.creditsRemaining !== undefined) {
+        MockStore.updateUser({ credits_remaining: data.creditsRemaining });
+      }
       
       const tabState: Record<string, 1 | 2 | 3> = {};
       (data.leads || []).forEach((lead: Lead) => {

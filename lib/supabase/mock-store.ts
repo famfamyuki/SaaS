@@ -129,6 +129,7 @@ export class MockStore {
     const updated = { ...current, ...updates, updated_at: new Date().toISOString() };
     if (typeof window !== 'undefined') {
       localStorage.setItem('outreach_mock_user', JSON.stringify(updated));
+      window.dispatchEvent(new Event('user-credits-updated'));
     }
     return updated;
   }
