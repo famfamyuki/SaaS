@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Zap, Mail, Lock, ArrowRight, Sparkles, AlertCircle } from 'lucide-react';
 import { createBrowserSupabaseClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { MockStore } from '@/lib/supabase/mock-store';
+import { ensureUserRecord } from '@/lib/supabase/user-service';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -47,13 +48,20 @@ export default function LoginPage() {
         throw new Error('Authentication failed. User session could not be established.');
       }
 
+      // Programmatically ensure/heal 5 free credits on login
+      const profile = await ensureUserRecord(
+        data.user.id,
+        data.user.email || email,
+        data.user.user_metadata?.full_name
+      );
+
       // Sync authenticated user state & redirect to dashboard
       MockStore.updateUser({
-        id: data.user.id,
-        email: data.user.email || email,
-        full_name: data.user.user_metadata?.full_name || email.split('@')[0],
-        subscription_status: 'free', // Default free tier unless confirmed by Stripe webhook
-        credits_remaining: 5,
+        id: profile.id || data.user.id,
+        email: profile.email || data.user.email || email,
+        full_name: profile.full_name || email.split('@')[0],
+        subscription_status: profile.subscription_status || 'free',
+        credits_remaining: profile.credits_remaining ?? 5,
       });
 
       router.push('/dashboard');

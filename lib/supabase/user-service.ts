@@ -3,7 +3,8 @@ import { UserProfile } from './types';
 import { MockStore } from './mock-store';
 
 /**
- * Ensures a user record exists in the database with 5 initial free credits upon signup.
+ * Ensures a user record exists in the database with 5 initial free credits upon signup or login.
+ * Automatically programmatically heals/replenishes 5 free credits if credits are missing (null/undefined/0).
  */
 export async function ensureUserRecord(userId: string, email: string, fullName?: string): Promise<UserProfile> {
   const supabaseAdmin = createAdminSupabaseClient();
@@ -20,7 +21,29 @@ export async function ensureUserRecord(userId: string, email: string, fullName?:
       .eq('id', userId)
       .single();
 
+    // Programmatic Fallback: If user exists but credits are missing or 0 on free tier, auto-heal to 5 credits
     if (existingUser && !selectError) {
+      if (
+        existingUser.credits_remaining === null ||
+        existingUser.credits_remaining === undefined ||
+        (existingUser.subscription_status === 'free' && existingUser.credits_remaining <= 0)
+      ) {
+        console.log(`[User Service Programmatic Fallback] Auto-granting 5 free credits to user ${userId} (${email})`);
+        const { data: healedUser } = await supabaseAdmin
+          .from('users')
+          .update({
+            credits_remaining: 5,
+            subscription_status: 'free',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', userId)
+          .select()
+          .single();
+
+        if (healedUser) {
+          return healedUser as UserProfile;
+        }
+      }
       return existingUser as UserProfile;
     }
 
@@ -28,7 +51,7 @@ export async function ensureUserRecord(userId: string, email: string, fullName?:
     const newUserRecord: Partial<UserProfile> = {
       id: userId,
       email: email,
-      full_name: fullName || email.split('@')[0],
+      full_name: fullName || (email ? email.split('@')[0] : 'Web Designer'),
       stripe_customer_id: null,
       subscription_status: 'free',
       credits_remaining: 5,

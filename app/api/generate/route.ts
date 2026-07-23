@@ -4,6 +4,7 @@ import { generateOutreachWithGemini } from '@/lib/ai/gemini';
 import { MockStore } from '@/lib/supabase/mock-store';
 import { createAdminSupabaseClient } from '@/lib/supabase/server';
 import { verifyApiAuth } from '@/lib/auth-guard';
+import { ensureUserRecord } from '@/lib/supabase/user-service';
 
 export async function POST(req: NextRequest) {
   try {
@@ -43,47 +44,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. CREDIT CHECK & AUTO-REPLENISH FOR FREE TIER USERS
+    // 3. CREDIT CHECK & PROGRAMMATIC FALLBACK FOR FREE TIER USERS
+    const userProfile = await ensureUserRecord(
+      auth.user.userId,
+      auth.user.email,
+      auth.user.user.full_name || undefined
+    );
+
     const supabaseAdmin = createAdminSupabaseClient();
-    let currentCredits = 0;
-
-    if (supabaseAdmin) {
-      const { data: dbUser } = await supabaseAdmin
-        .from('users')
-        .select('credits_remaining, subscription_status')
-        .eq('id', auth.user.userId)
-        .single();
-
-      currentCredits = dbUser?.credits_remaining ?? 0;
-
-      // If user profile is missing or existing Free user is stuck at 0 credits, auto-replenish 5 initial free credits
-      if (!dbUser || (dbUser.subscription_status === 'free' && currentCredits <= 0)) {
-        console.log(`[Credits Auto-Replenish] Initializing 5 free credits for user ${auth.user.userId}`);
-        const { data: updatedUser } = await supabaseAdmin
-          .from('users')
-          .upsert([
-            {
-              id: auth.user.userId,
-              email: auth.user.email,
-              full_name: auth.user.user.full_name || auth.user.email.split('@')[0],
-              subscription_status: 'free',
-              credits_remaining: 5,
-              updated_at: new Date().toISOString(),
-            },
-          ], { onConflict: 'id' })
-          .select()
-          .single();
-
-        currentCredits = updatedUser?.credits_remaining ?? 5;
-      }
-    } else {
-      const mockUser = MockStore.getUser();
-      currentCredits = mockUser.credits_remaining;
-      if (currentCredits <= 0 && mockUser.subscription_status === 'free') {
-        const reset = MockStore.resetUserToFree(mockUser.email, mockUser.full_name || undefined);
-        currentCredits = reset.credits_remaining;
-      }
-    }
+    let currentCredits = userProfile.credits_remaining ?? 5;
 
     if (currentCredits <= 0 || currentCredits < validUrls.length) {
       return NextResponse.json(
