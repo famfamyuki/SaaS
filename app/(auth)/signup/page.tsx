@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Zap, Mail, Lock, User, ArrowRight, CheckCircle2, AlertCircle, Sparkles } from 'lucide-react';
 import { createBrowserSupabaseClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { MockStore } from '@/lib/supabase/mock-store';
+import { ensureUserRecord } from '@/lib/supabase/user-service';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -42,6 +43,11 @@ export default function SignupPage() {
 
       if (signUpError) {
         throw new Error(signUpError.message || 'Failed to create account. Please check your inputs.');
+      }
+
+      if (data.user) {
+        // Guarantee 5 initial free credits inserted in database
+        await ensureUserRecord(data.user.id, email, fullName);
       }
 
       if (data.session) {
