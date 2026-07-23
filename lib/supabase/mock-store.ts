@@ -93,6 +93,13 @@ export class MockStore {
         parsed.credits_remaining = 5;
         localStorage.setItem('outreach_mock_user', JSON.stringify(parsed));
       }
+
+      // Auto-replenish 5 initial free credits if existing free testing account is stuck at 0
+      if (parsed.subscription_status === 'free' && (parsed.credits_remaining === undefined || parsed.credits_remaining <= 0)) {
+        parsed.credits_remaining = 5;
+        localStorage.setItem('outreach_mock_user', JSON.stringify(parsed));
+      }
+
       return parsed;
     } catch (e) {
       localStorage.setItem('outreach_mock_user', JSON.stringify(INITIAL_MOCK_USER));

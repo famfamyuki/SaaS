@@ -249,10 +249,25 @@ export default function GeneratePage() {
             </div>
           </div>
 
+          {/* Error Alert */}
           {error && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{error}</span>
+            <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center justify-between shadow-xl">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+                <span>{error}</span>
+              </div>
+              {(error.includes('Insufficient credits') || error.includes('credits')) && (
+                <button
+                  onClick={() => {
+                    MockStore.resetUserToFree();
+                    setError(null);
+                    window.location.reload();
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:opacity-95 text-white font-bold text-xs shadow-md transition-all shrink-0 ml-4"
+                >
+                  Replenish 5 Free Demo Credits
+                </button>
+              )}
             </div>
           )}
 
