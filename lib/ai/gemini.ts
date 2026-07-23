@@ -30,9 +30,8 @@ export async function generateOutreachWithGemini(
 ): Promise<GeneratedLeadResult> {
   const apiKey = process.env.GEMINI_API_KEY || '';
 
-  // Fallback if API key is missing or dummy
+  // Fallback to dynamic template generator if API key is unconfigured or mock
   if (!apiKey || apiKey.includes('your-gemini') || apiKey.includes('mock-gemini')) {
-    console.log('[Gemini Engine] Using intelligent Website Redesign fallback generator');
     return generateFallbackRedesignOutreach(scrapedData, userOffer, targetTone);
   }
 
@@ -65,31 +64,35 @@ function generateFallbackRedesignOutreach(
   offer: string,
   tone: string
 ): GeneratedLeadResult {
-  const compName = scraped.title.split('-')[0].split('|')[0].trim() || scraped.domain.split('.')[0];
-  const capitalized = compName.charAt(0).toUpperCase() + compName.slice(1);
+  const domainParts = scraped.domain.split('.');
+  const rawBrand = domainParts[0];
+  const capitalized = rawBrand.charAt(0).toUpperCase() + rawBrand.slice(1);
+  const mainH1 = scraped.h1[0] || `${capitalized} Digital Platform`;
+  const mainH2 = scraped.h2[0] || 'Core Offerings & Solutions';
+  const pageDesc = scraped.description || scraped.aboutText.slice(0, 150) || `${capitalized} provides industry services online.`;
 
   return {
     company_name: capitalized,
-    summary: `${capitalized} (${scraped.domain}) provides ${scraped.description || 'business services'}, but its website design exhibits mobile layout friction and unoptimized conversion CTA paths.`,
+    summary: `${capitalized} (${scraped.domain}) focuses on ${pageDesc.slice(0, 120)}. However, its homepage UI exhibits mobile layout friction and unoptimized CTA contrast.`,
     pain_points: [
-      `Outdated mobile responsive layout & navigation friction on ${scraped.domain}`,
-      `Sub-optimal Call-to-Action (CTA) placement causing homepage visitor drop-off`,
-      `Visual hierarchy & typography due for a modern UI/UX redesign`
+      `Mobile navigation friction on ${scraped.domain} around header "${mainH1.slice(0, 45)}"`,
+      `Low CTA button contrast beneath section "${mainH2.slice(0, 45)}", causing visitor drop-off`,
+      `Outdated typography and visual hierarchy due for a modern UI redesign`
     ],
     email_draft_1: {
-      subject: `Quick design teardown & redesign concept for ${scraped.domain}`,
-      hook: `Noticed ${capitalized}'s current homepage layout while researching high-growth companies in your space.`,
-      body: `Hi Alex,\n\nI was checking out ${scraped.domain} and noticed a few quick UI/UX optimization opportunities—specifically around mobile navigation responsiveness and primary CTA placement.\n\nOur team specializes in high-converting website redesigns that modernize brand aesthetics while increasing conversion rates by 30-50%.\n\nWe put together a quick 3-slide redesign mockup for ${capitalized}. Would you be open to taking a look?`
+      subject: `Quick design teardown for ${scraped.domain}`,
+      hook: `Noticed ${capitalized}'s current homepage header "${mainH1.slice(0, 45)}" while auditing top sites in your space.`,
+      body: `Hi Alex,\n\nI was reviewing ${scraped.domain} and noticed a few high-impact UI/UX opportunities—specifically around mobile responsiveness and primary CTA contrast beneath "${mainH2.slice(0, 45)}".\n\nOur team specializes in high-converting website redesigns that modernize brand aesthetics while boosting conversion rates by 35%+.\n\nWe created a quick 3-slide redesign concept for ${capitalized}. Would you be open to taking a look?`
     },
     email_draft_2: {
-      subject: `Website redesign idea for ${capitalized}`,
-      hook: `Quick note regarding ${capitalized}'s current website UX.`,
-      body: `Hi Alex,\n\nQuick question: Are you planning any website UI/UX updates for ${scraped.domain} this quarter?\n\nWe recently redesigned a site in your industry, resulting in a 42% bump in inbound lead inquiries within 30 days.\n\nI'd love to share a free 5-minute video teardown of ${scraped.domain}. Up for a quick look?`
+      subject: `Website redesign concept for ${capitalized}`,
+      hook: `Quick note regarding ${scraped.domain}'s current mobile user experience.`,
+      body: `Hi Alex,\n\nAre you planning any website UI/UX updates for ${scraped.domain} this quarter?\n\nWhile inspecting your homepage ("${scraped.title.slice(0, 50)}"), we identified 3 conversion bottlenecks that often cause bounce rate spikes on mobile devices.\n\nI'd love to share a free 5-minute video audit tailored for ${capitalized}. Up for a quick look?`
     },
     email_draft_3: {
       subject: `Modernizing ${capitalized}'s web conversion flow`,
-      hook: `Huge fan of ${capitalized}'s work, but saw an opportunity to double your website lead capture.`,
-      body: `Hey Alex,\n\nMost B2B websites lose over 60% of potential inbound leads due to subtle UX friction on mobile devices and weak CTA contrast.\n\nWe specialize in rebuilding websites for growing brands—turning static sites into high-performing customer acquisition engines.\n\nCould I send over a complimentary website audit & redesign concept tailored for ${capitalized}?`
+      hook: `Loved learning about ${capitalized}'s offerings around "${mainH2.slice(0, 40)}", but saw an opportunity to double your lead capture.`,
+      body: `Hey Alex,\n\nMost B2B websites lose over 60% of potential inbound traffic due to mobile UX friction and low-contrast call-to-actions.\n\nWe specialize in rebuilding websites for growing brands—turning static sites like ${scraped.domain} into high-performing customer acquisition engines.\n\nCould I send over a complimentary website audit & redesign concept tailored for ${capitalized}?`
     }
   };
 }

@@ -44,7 +44,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. CREDIT CHECK & PROGRAMMATIC FALLBACK FOR FREE TIER USERS
+    const urlCount = validUrls.length;
+
+    // 3. PRE-EXECUTION CREDIT CHECK (Must have at least N credits for N URLs)
     const userProfile = await ensureUserRecord(
       auth.user.userId,
       auth.user.email,
@@ -52,27 +54,27 @@ export async function POST(req: NextRequest) {
     );
 
     const supabaseAdmin = createAdminSupabaseClient();
-    let currentCredits = userProfile.credits_remaining ?? 5;
+    const initialCredits = userProfile.credits_remaining ?? 5;
 
-    if (currentCredits <= 0 || currentCredits < validUrls.length) {
+    if (initialCredits < urlCount || initialCredits <= 0) {
       return NextResponse.json(
         { 
-          error: `Insufficient credits (${currentCredits} remaining, ${validUrls.length} required). Please upgrade your subscription to Pro.`,
-          creditsRemaining: currentCredits,
-          requiredCredits: validUrls.length
+          error: `Insufficient credits. You need ${urlCount} credits to audit ${urlCount} website URLs, but only have ${initialCredits} remaining. Please upgrade your subscription to Pro.`,
+          creditsRemaining: initialCredits,
+          requiredCredits: urlCount
         },
         { status: 402 }
       );
     }
 
-    // 4. Processing Pipelines (Scrape -> Gemini AI -> Save -> Deduct Credit On Success)
+    // 4. Processing Pipelines (Scrape -> Gemini AI -> Save Lead)
     const results = [];
 
     for (const targetUrl of validUrls) {
-      // Scrape target URL
+      // Scrape target URL dynamically
       const scrapedData = await scrapeTargetWebsite(targetUrl);
 
-      // Invoke Gemini AI Engine
+      // Invoke Gemini AI Engine with dynamic site context
       const aiResult = await generateOutreachWithGemini(
         scrapedData,
         value_proposition,
@@ -106,29 +108,30 @@ export async function POST(req: NextRequest) {
         savedLead = MockStore.addLead(leadPayload);
       }
 
-      // EXCEPTION-SAFE DEDUCTION: Only deduct credit upon SUCCESSFUL email lead generation
-      const newBalance = Math.max(0, currentCredits - 1);
-      if (supabaseAdmin) {
-        await supabaseAdmin
-          .from('users')
-          .update({
-            credits_remaining: newBalance,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', auth.user.userId);
-      } else {
-        MockStore.updateUser({ credits_remaining: newBalance });
-      }
-      currentCredits = newBalance;
-
       results.push(savedLead);
     }
 
+    // 5. ACCURATE N-CREDIT DEDUCTION ON SUCCESSFUL BATCH COMPLETION
+    const processedCount = results.length;
+    const finalBalance = Math.max(0, initialCredits - processedCount);
+
+    if (supabaseAdmin) {
+      await supabaseAdmin
+        .from('users')
+        .update({
+          credits_remaining: finalBalance,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', auth.user.userId);
+    }
+
+    MockStore.updateUser({ credits_remaining: finalBalance });
+
     return NextResponse.json({
       success: true,
-      count: results.length,
+      count: processedCount,
       leads: results,
-      creditsRemaining: currentCredits,
+      creditsRemaining: finalBalance,
     });
   } catch (err: any) {
     console.error('[API /api/generate Error]:', err);

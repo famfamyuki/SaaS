@@ -18,7 +18,7 @@ import {
   ArrowRight,
   ExternalLink
 } from 'lucide-react';
-import { Lead } from '@/lib/supabase/types';
+import { Lead, UserProfile } from '@/lib/supabase/types';
 import { MockStore } from '@/lib/supabase/mock-store';
 
 import { copyToClipboard } from '@/lib/clipboard';
@@ -44,6 +44,17 @@ export default function GeneratePage() {
   const [error, setError] = React.useState<string | null>(null);
   const [copiedId, setCopiedId] = React.useState<string | null>(null);
   const [selectedTabDraft, setSelectedTabDraft] = React.useState<Record<string, 1 | 2 | 3>>({});
+  const [user, setUser] = React.useState<UserProfile | null>(null);
+
+  React.useEffect(() => {
+    const refreshUser = () => setUser(MockStore.getUser());
+    refreshUser();
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('user-credits-updated', refreshUser);
+      return () => window.removeEventListener('user-credits-updated', refreshUser);
+    }
+  }, []);
 
   // CSV File Upload Parser
   const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -180,15 +191,22 @@ export default function GeneratePage() {
           </p>
         </div>
 
-        {results.length > 0 && (
-          <button
-            onClick={exportResultsToCsv}
-            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/25 transition-all flex items-center gap-2"
-          >
-            <FileSpreadsheet className="w-4 h-4" />
-            <span>Export Batch ({results.length}) to CSV</span>
-          </button>
-        )}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 bg-slate-900/90 px-4 py-2 rounded-2xl border border-slate-800 text-xs">
+            <span className="text-slate-400">Available Credits:</span>
+            <span className="font-bold text-amber-400 text-sm">{user?.credits_remaining ?? 5}</span>
+          </div>
+
+          {results.length > 0 && (
+            <button
+              onClick={exportResultsToCsv}
+              className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/25 transition-all flex items-center gap-2"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>Export Batch ({results.length}) to CSV</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Generator Input Form */}
