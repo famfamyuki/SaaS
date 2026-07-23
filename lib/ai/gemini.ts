@@ -30,11 +30,14 @@ export async function generateOutreachWithGemini(
 ): Promise<GeneratedLeadResult> {
   const apiKey = process.env.GEMINI_API_KEY || '';
 
-  // Fallback to dynamic template generator if API key is unconfigured or mock
+  // 1. Strict Environment Key Verification
   if (!apiKey || apiKey.includes('your-gemini') || apiKey.includes('mock-gemini')) {
-    return generateFallbackRedesignOutreach(scrapedData, userOffer, targetTone);
+    throw new Error(
+      'Gemini API Key is unconfigured in server environment variables (GEMINI_API_KEY). Please configure a valid Google Gemini API Key in Vercel settings.'
+    );
   }
 
+  // 2. Direct Gemini 1.5 Pro AI Call (No silent dummy fallback)
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ 
@@ -49,50 +52,20 @@ export async function generateOutreachWithGemini(
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
 
+    if (!responseText) {
+      throw new Error('Gemini API returned an empty response.');
+    }
+
     const cleanJsonText = responseText.replace(/```json\n?|\n?```/g, '').trim();
     const parsed: GeneratedLeadResult = JSON.parse(cleanJsonText);
 
+    if (!parsed.company_name || !parsed.email_draft_1 || !parsed.email_draft_2 || !parsed.email_draft_3) {
+      throw new Error('Gemini API output did not match expected proposal JSON structure.');
+    }
+
     return parsed;
   } catch (err: any) {
-    console.warn(`[Gemini Error] ${err.message}. Falling back to dynamic Redesign Proposal copy.`);
-    return generateFallbackRedesignOutreach(scrapedData, userOffer, targetTone);
+    console.error('[Gemini API Direct Exception]:', err);
+    throw new Error(`Gemini API Error: ${err.message || 'Failed to call Gemini LLM model'}`);
   }
-}
-
-function generateFallbackRedesignOutreach(
-  scraped: ScrapedPageContent,
-  offer: string,
-  tone: string
-): GeneratedLeadResult {
-  const domainParts = scraped.domain.split('.');
-  const rawBrand = domainParts[0];
-  const capitalized = rawBrand.charAt(0).toUpperCase() + rawBrand.slice(1);
-  const mainH1 = scraped.h1[0] || `${capitalized} Digital Platform`;
-  const mainH2 = scraped.h2[0] || 'Core Offerings & Solutions';
-  const pageDesc = scraped.description || scraped.aboutText.slice(0, 150) || `${capitalized} provides industry services online.`;
-
-  return {
-    company_name: capitalized,
-    summary: `${capitalized} (${scraped.domain}) focuses on ${pageDesc.slice(0, 120)}. However, its homepage UI exhibits mobile layout friction and unoptimized CTA contrast.`,
-    pain_points: [
-      `Mobile navigation friction on ${scraped.domain} around header "${mainH1.slice(0, 45)}"`,
-      `Low CTA button contrast beneath section "${mainH2.slice(0, 45)}", causing visitor drop-off`,
-      `Outdated typography and visual hierarchy due for a modern UI redesign`
-    ],
-    email_draft_1: {
-      subject: `Quick design teardown for ${scraped.domain}`,
-      hook: `Noticed ${capitalized}'s current homepage header "${mainH1.slice(0, 45)}" while auditing top sites in your space.`,
-      body: `Hi Alex,\n\nI was reviewing ${scraped.domain} and noticed a few high-impact UI/UX opportunities—specifically around mobile responsiveness and primary CTA contrast beneath "${mainH2.slice(0, 45)}".\n\nOur team specializes in high-converting website redesigns that modernize brand aesthetics while boosting conversion rates by 35%+.\n\nWe created a quick 3-slide redesign concept for ${capitalized}. Would you be open to taking a look?`
-    },
-    email_draft_2: {
-      subject: `Website redesign concept for ${capitalized}`,
-      hook: `Quick note regarding ${scraped.domain}'s current mobile user experience.`,
-      body: `Hi Alex,\n\nAre you planning any website UI/UX updates for ${scraped.domain} this quarter?\n\nWhile inspecting your homepage ("${scraped.title.slice(0, 50)}"), we identified 3 conversion bottlenecks that often cause bounce rate spikes on mobile devices.\n\nI'd love to share a free 5-minute video audit tailored for ${capitalized}. Up for a quick look?`
-    },
-    email_draft_3: {
-      subject: `Modernizing ${capitalized}'s web conversion flow`,
-      hook: `Loved learning about ${capitalized}'s offerings around "${mainH2.slice(0, 40)}", but saw an opportunity to double your lead capture.`,
-      body: `Hey Alex,\n\nMost B2B websites lose over 60% of potential inbound traffic due to mobile UX friction and low-contrast call-to-actions.\n\nWe specialize in rebuilding websites for growing brands—turning static sites like ${scraped.domain} into high-performing customer acquisition engines.\n\nCould I send over a complimentary website audit & redesign concept tailored for ${capitalized}?`
-    }
-  };
 }

@@ -276,7 +276,7 @@ export default function GeneratePage() {
             <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-semibold flex items-center justify-between shadow-xl">
               <div className="flex items-center gap-2">
                 <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
-                <span>{error}</span>
+                <span>API Error: {error}</span>
               </div>
               {(error.includes('Insufficient credits') || error.includes('credits')) && (
                 <button
