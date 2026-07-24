@@ -39,7 +39,7 @@ export default function DashboardOverviewPage() {
               <span>Gemini 1.5 Pro Copilot Active</span>
             </div>
             <h1 className="text-3xl font-black text-white">
-              Welcome back, <span className="gradient-text">{user?.full_name || 'Sales Leader'}</span> 👋
+              Welcome back, <span className="gradient-text">{user?.full_name || user?.email?.split('@')[0] || 'Web Agency Partner'}</span> 👋
             </h1>
             <p className="text-xs text-slate-400 max-w-xl">
               Upload target company websites to scrape homepage insights, extract core pain points, and generate personalized cold email variations.

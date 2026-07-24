@@ -6,6 +6,7 @@ import { Zap, Mail, Lock, User, ArrowRight, X, AlertCircle, Sparkles } from 'luc
 import { createBrowserSupabaseClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { MockStore } from '@/lib/supabase/mock-store';
 import { ensureUserRecord } from '@/lib/supabase/user-service';
+import { getAuthRedirectUrl } from '@/lib/supabase/auth-helpers';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -38,7 +39,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
 
     if (!isSupabaseConfigured()) {
       setErrorMsg(
-        'Google OAuth requires Supabase configuration. Please ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in your environment.'
+        'Google OAuth requires Supabase configuration. Please ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set in environment variables.'
       );
       setGoogleLoading(false);
       return;
@@ -46,7 +47,7 @@ export function AuthModal({ isOpen, onClose, initialMode = 'login' }: AuthModalP
 
     try {
       const supabase = createBrowserSupabaseClient();
-      const redirectUrl = `${window.location.origin}/api/auth/callback`;
+      const redirectUrl = getAuthRedirectUrl();
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

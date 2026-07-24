@@ -7,6 +7,7 @@ import { Zap, Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react';
 import { createBrowserSupabaseClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { MockStore } from '@/lib/supabase/mock-store';
 import { ensureUserRecord } from '@/lib/supabase/user-service';
+import { getAuthRedirectUrl } from '@/lib/supabase/auth-helpers';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -85,7 +86,7 @@ export default function LoginPage() {
 
     try {
       const supabase = createBrowserSupabaseClient();
-      const redirectUrl = `${window.location.origin}/api/auth/callback`;
+      const redirectUrl = getAuthRedirectUrl();
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

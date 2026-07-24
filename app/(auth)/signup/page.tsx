@@ -7,6 +7,7 @@ import { Zap, Mail, Lock, User, ArrowRight, CheckCircle2, AlertCircle } from 'lu
 import { createBrowserSupabaseClient, isSupabaseConfigured } from '@/lib/supabase/client';
 import { MockStore } from '@/lib/supabase/mock-store';
 import { ensureUserRecord } from '@/lib/supabase/user-service';
+import { getAuthRedirectUrl } from '@/lib/supabase/auth-helpers';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -82,7 +83,7 @@ export default function SignupPage() {
 
     try {
       const supabase = createBrowserSupabaseClient();
-      const redirectUrl = `${window.location.origin}/api/auth/callback`;
+      const redirectUrl = getAuthRedirectUrl();
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

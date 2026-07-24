@@ -1,98 +1,34 @@
 import { Lead, UserProfile } from './types';
 
-const INITIAL_MOCK_LEADS: Lead[] = [
-  {
-    id: 'lead-001',
-    user_id: 'sample-user-id',
-    website_url: 'https://stripe.com',
-    company_name: 'Stripe',
-    summary: 'Financial infrastructure platform for software and internet businesses handling payments and billing globally.',
-    pain_points: [
-      'Managing high-volume international fraud and chargebacks',
-      'Scaling enterprise billing compliance across 40+ countries',
-      'Minimizing API integration friction for developer-led startups'
-    ],
-    target_tone: 'Professional',
-    value_proposition: 'AI-driven payment routing optimization reducing payment decline rates by 18%.',
-    email_draft_1: {
-      subject: 'Optimizing Stripe payment authorization rates by 18%',
-      hook: "Saw Stripe's recent update on global payment orchestration across new markets.",
-      body: `Hi Alex,\n\nNotice how scaling international transactions often increases authorization decline rates. We've built an AI routing middleware that plugs right into payment engines to boost success rates by 18%.\n\nWould you be open to a 10-minute briefing next Tuesday?`
-    },
-    email_draft_2: {
-      subject: 'Quick question regarding payment authorization declines at Stripe',
-      hook: "Impressive work on Stripe Connect's multi-currency settlement engine.",
-      body: `Hi team,\n\nQuick thought: cross-border decline spikes remain one of the top causes of churn for high-growth merchants.\n\nOur intelligent routing engine dynamically reduces false flags before hitting issuing banks.\n\nWorth a brief 5-min look this week?`
-    },
-    email_draft_3: {
-      subject: 'Idea for Stripe merchant revenue recovery',
-      hook: "Loved the developer experience documented in Stripe's v2 API release notes.",
-      body: `Hey Alex,\n\nWe helped a peer payment processor recover $1.2M in annual decline revenue using automated retry routing.\n\nCould I send over a 2-page teardown tailored to Stripe?`
-    },
-    status: 'completed',
-    created_at: new Date(Date.now() - 3600000 * 24).toISOString(),
-  },
-  {
-    id: 'lead-002',
-    user_id: 'sample-user-id',
-    website_url: 'https://vercel.com',
-    company_name: 'Vercel',
-    summary: 'Frontend cloud platform enabling developer teams to deploy Next.js apps with instant global CDN and serverless compute.',
-    pain_points: [
-      'Optimizing cold-start latency for complex serverless functions',
-      'Reducing enterprise bandwidth costs on video and image delivery',
-      'Streamlining multi-region preview environment collaboration'
-    ],
-    target_tone: 'Casual',
-    value_proposition: 'Zero-overhead edge caching accelerator for high-concurrency Next.js dynamic apps.',
-    email_draft_1: {
-      subject: 'Cutting serverless cold-starts on Next.js preview deployments',
-      hook: 'Huge fan of Vercel Ship and the latest Turbopack performance wins!',
-      body: `Hey Alex,\n\nWith dynamic serverless rendering exploding, cold-start latency can still hit peak traffic spikes.\n\nWe built an edge warming strategy that reduces cold-start delays by 65% with zero config change.\n\nUp for a quick coffee chat?`
-    },
-    email_draft_2: {
-      subject: 'Vercel + Next.js cold-start optimization proposal',
-      hook: 'Noticed Vercel expanding enterprise edge middleware capabilities.',
-      body: `Hi Alex,\n\nQuick note—our team developed a pre-warming algorithm tailored specifically for Next.js App Router deployments.\n\nWould love to share benchmark stats with your platform team if you have 10 mins.`
-    },
-    email_draft_3: {
-      subject: 'Idea for Vercel enterprise bandwidth reduction',
-      hook: 'Congratulation on Vercel AI SDK 3.0 adoption numbers!',
-      body: `Hey Alex,\n\nWe helped an enterprise SaaS running on Vercel trim edge bandwidth bills by 22% using automated asset compression.\n\nOpen to taking a quick look at the breakdown?`
-    },
-    status: 'completed',
-    created_at: new Date(Date.now() - 3600000 * 48).toISOString(),
-  }
-];
-
 export class MockStore {
   /**
    * Returns current authenticated user or null if unauthenticated (Guest state).
-   * Automatically purges legacy hardcoded mock users (Alex Vance / demo-user-123).
+   * Strictly avoids initializing hardcoded dummy accounts.
    */
   static getUser(): UserProfile | null {
     if (typeof window === 'undefined') return null;
-    const stored = localStorage.getItem('outreach_mock_user');
+    const stored = localStorage.getItem('outreach_user_session');
     if (!stored) return null;
 
     try {
       const parsed: UserProfile = JSON.parse(stored);
 
-      // Auto-purge hardcoded dummy user "Alex Vance" or legacy mock IDs
+      // Auto-purge any legacy mock user data
       if (
+        !parsed.id ||
         parsed.id === 'user-free-default' ||
         parsed.id === 'demo-user-123' ||
         parsed.email === 'alex.sales@outreachintel.ai' ||
         parsed.full_name === 'Alex Vance'
       ) {
-        console.log('[Auth Guard] Purging hardcoded dummy user Alex Vance. Transitioning to Guest state.');
+        localStorage.removeItem('outreach_user_session');
         localStorage.removeItem('outreach_mock_user');
         return null;
       }
 
       return parsed;
     } catch (e) {
-      localStorage.removeItem('outreach_mock_user');
+      localStorage.removeItem('outreach_user_session');
       return null;
     }
   }
@@ -109,7 +45,7 @@ export class MockStore {
       updated_at: new Date().toISOString(),
     };
     if (typeof window !== 'undefined') {
-      localStorage.setItem('outreach_mock_user', JSON.stringify(freshUser));
+      localStorage.setItem('outreach_user_session', JSON.stringify(freshUser));
       window.dispatchEvent(new Event('user-credits-updated'));
     }
     return freshUser;
@@ -130,7 +66,7 @@ export class MockStore {
     };
 
     if (typeof window !== 'undefined') {
-      localStorage.setItem('outreach_mock_user', JSON.stringify(updated));
+      localStorage.setItem('outreach_user_session', JSON.stringify(updated));
       window.dispatchEvent(new Event('user-credits-updated'));
     }
     return updated;
@@ -138,6 +74,7 @@ export class MockStore {
 
   static clearUser(): void {
     if (typeof window !== 'undefined') {
+      localStorage.removeItem('outreach_user_session');
       localStorage.removeItem('outreach_mock_user');
       window.dispatchEvent(new Event('user-credits-updated'));
     }
@@ -153,16 +90,13 @@ export class MockStore {
   }
 
   static getLeads(): Lead[] {
-    if (typeof window === 'undefined') return INITIAL_MOCK_LEADS;
-    const stored = localStorage.getItem('outreach_mock_leads');
-    if (!stored) {
-      localStorage.setItem('outreach_mock_leads', JSON.stringify(INITIAL_MOCK_LEADS));
-      return INITIAL_MOCK_LEADS;
-    }
+    if (typeof window === 'undefined') return [];
+    const stored = localStorage.getItem('outreach_user_leads');
+    if (!stored) return [];
     try {
       return JSON.parse(stored);
     } catch (e) {
-      return INITIAL_MOCK_LEADS;
+      return [];
     }
   }
 
@@ -175,7 +109,7 @@ export class MockStore {
     const current = this.getLeads();
     const updated = [newLead, ...current];
     if (typeof window !== 'undefined') {
-      localStorage.setItem('outreach_mock_leads', JSON.stringify(updated));
+      localStorage.setItem('outreach_user_leads', JSON.stringify(updated));
     }
     return newLead;
   }

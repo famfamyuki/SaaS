@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
         );
       }
     } catch (err) {
-      console.error('[Supabase Auth Callback Error]:', err);
+      // Graceful OAuth callback fallback
     }
   }
 
