@@ -1,4 +1,3 @@
-'use me';
 'use client';
 
 import React from 'react';
@@ -143,6 +142,18 @@ export function Sidebar() {
           >
             <span>Upgrade Plan</span>
             <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {/* Legal Link */}
+        <div className="mt-2 text-center">
+          <Link
+            href="/tokushoho"
+            target="_blank"
+            className="text-[10px] text-slate-500 hover:text-slate-300 transition-colors inline-flex items-center gap-1"
+          >
+            <span>特定商取引法に基づく表記</span>
+            <ExternalLink className="w-2.5 h-2.5" />
           </Link>
         </div>
       </div>

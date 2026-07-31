@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Zap, ArrowLeft } from 'lucide-react';
+import { Zap, ArrowLeft, Mail } from 'lucide-react';
 
 export default function LegalLayout({
   children,
@@ -35,13 +35,30 @@ export default function LegalLayout({
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800 py-8 px-6 text-center text-xs text-slate-500">
-        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© 2026 OutreachIntelligence AI. All rights reserved.</p>
-          <div className="flex items-center gap-6">
-            <Link href="/terms" className="hover:text-slate-300">利用規約</Link>
-            <Link href="/privacy" className="hover:text-slate-300">プライバシーポリシー</Link>
-            <Link href="/legal" className="hover:text-slate-300">特定商取引法に基づく表記</Link>
+      <footer className="border-t border-slate-800 py-8 px-6 text-xs text-slate-500 bg-slate-950">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <p>© 2026 OutreachIntelligence AI. All rights reserved.</p>
+            <span className="hidden sm:inline text-slate-700">|</span>
+            <div className="flex items-center gap-1.5 text-slate-400">
+              <Mail className="w-3.5 h-3.5 text-indigo-400" />
+              <span>サポート窓口:</span>
+              <a href="mailto:support@outreachintel.ai" className="hover:text-indigo-400 underline font-mono">
+                support@outreachintel.ai
+              </a>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-6">
+            <Link href="/tokushoho" className="hover:text-slate-300 transition-colors">
+              特定商取引法に基づく表記
+            </Link>
+            <Link href="/terms" className="hover:text-slate-300 transition-colors">
+              利用規約
+            </Link>
+            <Link href="/privacy" className="hover:text-slate-300 transition-colors">
+              プライバシーポリシー
+            </Link>
           </div>
         </div>
       </footer>
