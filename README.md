@@ -7,24 +7,40 @@
 **Stage:** Incubation / product planning only  
 **Development:** Not started  
 **Project established:** 2026-09-10  
-**Repository:** This repository is now dedicated to AI Wait OS
+**Repository:** This repository is dedicated to AI Wait OS
 
 ## One-line thesis
 
-AI is shifting from instant answers to long-running, parallel agents. The scarce resource becomes **human attention**: what should the person do while agents work, and when should the person return to review, approve, redirect, or decide?
+AI is shifting from instant answers to long-running, parallel agents. The scarce resource becomes **human attention**: what should the person do while agents work, when should they return to review or decide, and when is the best action actually to rest, disengage, or enjoy a short break?
 
-AI Wait OS is a coordination layer that turns agent runtime into useful human time without creating harmful context switching.
+AI Wait OS is a coordination layer that turns agent runtime into valuable human time without forcing every available minute into more work.
+
+## Long-term product
+
+The end-state is **Attention OS**: an operating layer for human attention in an agentic world.
+
+It coordinates five classes of human state:
+
+1. **Human Work** — useful tasks that fit the available time and context.
+2. **Human Decision** — approvals, reviews, clarifications, and direction changes needed by agents.
+3. **Recovery** — deliberate short breaks when additional work would reduce continuity or create unnecessary fatigue.
+4. **Recreation** — optional, user-authorized leisure or entertainment that can fit a bounded interval.
+5. **Off / Do Nothing** — protected personal time or intentional non-intervention when the system should stay quiet.
+
+The system must never assume that a free minute should be monetized or filled with productivity. Sometimes the highest-value recommendation is `TAKE_A_BREAK`, `ENJOY_RECREATION`, or `DO_NOTHING`.
 
 ## Product direction
 
-The project should evolve in three layers, in this order:
+The project should evolve in four layers:
 
 1. **Wait Companion — MVP**  
-   Detect or register an active AI task, estimate the usable gap, and recommend a human task that fits the remaining time and switching cost.
+   Detect or register an active AI task, estimate the usable gap, and recommend one appropriate next state: a small human task, a short break, or nothing.
 2. **Human Checkpoint Queue**  
    Aggregate approvals, questions, reviews, and decisions from multiple agents into one prioritized queue.
-3. **Human Attention Orchestrator**  
-   Coordinate many agent runs and human tasks, deciding when human attention is actually needed and what deserves it next.
+3. **Attention Orchestrator**  
+   Coordinate agent runs, human work, recovery windows, optional recreation, and clean return timing.
+4. **AI Workforce Attention Layer**  
+   For teams, route scarce human judgment across many agents while protecting human focus and off-hours.
 
 The long-term product is **not a waiting-room app**. Waiting time is the wedge; human-attention orchestration is the durable problem.
 
@@ -37,7 +53,7 @@ Start with high-frequency agent users rather than the general public:
 - founders/operators delegating work to several AI systems;
 - later, teams supervising many agents.
 
-These users experience repeated long-running tasks and have measurable opportunity cost when attention is poorly allocated.
+These users experience repeated long-running tasks and have measurable coordination cost when attention is poorly allocated.
 
 ## Core product loop
 
@@ -46,52 +62,67 @@ Agent task starts
       ↓
 Estimate usable gap + confidence
       ↓
-Select a human task with low enough switching cost
+Choose the best human state
+      ├─ Human work
+      ├─ Human decision
+      ├─ Recovery
+      ├─ Optional recreation
+      └─ Do nothing
       ↓
-Human completes / skips / continues task
+Protect a clean return boundary
       ↓
 Agent finishes or asks for input
       ↓
-Return at a clean interruption point
+Return now / finish current activity / defer safely
       ↓
 Review / approve / redirect
       ↓
-Learn duration and preference signals
+Learn timing and preference signals
 ```
 
-## Strategic principle
+## Strategic principles
 
-Do not optimize for keeping users on a loading screen. Agent products increasingly support background work, notifications, parallel execution, and mobile supervision. The product must remain valuable even when the user leaves the originating AI app completely.
+- Do not optimize for keeping users on a loading screen.
+- Do not optimize for maximum utilization of every minute.
+- Optimize for **valuable attention allocation and smooth transitions**.
+- Treat recovery as a legitimate output of the scheduler, not a failure to find work.
+- Treat recreation as opt-in and bounded; never assume the system should manage all personal leisure.
+- Protect off-hours by default. Non-urgent agent work should be allowed to continue without pulling the human back in.
+- The user must always be able to override, disable, or narrow what the system manages.
 
 ## Primary hypotheses
 
 - H1: frequent agent users accumulate meaningful fragmented gaps during a workday.
 - H2: a subset of those gaps can be used without causing more context-switching cost than value.
-- H3: duration-aware task matching is substantially better than a normal to-do list during those gaps.
-- H4: as users run more agents concurrently, human approvals and review requests become a larger bottleneck than raw agent runtime.
-- H5: cross-agent attention history can become a defensible personalization layer.
+- H3: some gaps are better spent on recovery than on another task.
+- H4: duration-aware next-action selection is substantially better than a normal to-do list during agent runtime.
+- H5: as users run more agents concurrently, human approvals and review requests become a larger bottleneck than raw agent runtime.
+- H6: cross-agent attention history can improve recommendations while still preserving user control and privacy.
 
-All five remain **hypotheses**, not validated facts for this product.
+All remain **hypotheses**, not validated facts for this product.
 
 ## MVP boundary
 
-The first version should do only four things well:
+The first version should do only five things well:
 
 1. accept an agent run manually or through one simple integration;
 2. estimate a usable time window;
-3. recommend one suitable human task at a time;
-4. return the user to the agent when action is needed.
+3. recommend one suitable next state at a time;
+4. include `break` and `no recommendation` as valid outputs;
+5. return the user to the agent when action is needed.
 
-Do **not** begin with a universal agent integration platform, autonomous task execution, a full calendar replacement, an enterprise approval engine, or an advertising model.
+Recreation management should not be required for MVP. First prove that the scheduler can distinguish **work versus recovery versus no intervention**. Recreation can be added only after users explicitly want it.
+
+Do **not** begin with a universal agent integration platform, autonomous task execution, a full calendar replacement, a wellness/health product, an enterprise approval engine, or an advertising model.
 
 ## Canonical documents
 
-- [`PRODUCT.md`](./PRODUCT.md) — users, jobs, UX, scope, metrics, monetization
-- [`ARCHITECTURE.md`](./ARCHITECTURE.md) — system boundaries, data model, integrations, privacy
+- [`PRODUCT.md`](./PRODUCT.md) — users, jobs, UX, attention modes, scope, metrics, monetization
+- [`ARCHITECTURE.md`](./ARCHITECTURE.md) — system boundaries, data model, attention/recovery engine, integrations, privacy
 - [`ROADMAP.md`](./ROADMAP.md) — validation gates, phases, success and kill criteria
 - [`RESEARCH_AND_DECISIONS.md`](./RESEARCH_AND_DECISIONS.md) — evidence, assumptions, competitor frame, durable decisions
 - [`DEVELOPMENT_RULES.md`](./DEVELOPMENT_RULES.md) — future implementation and documentation rules
 
 ## Next trigger
 
-Do not start a large build merely because the idea sounds plausible. Resume implementation when there is time to run the Phase 0 validation in `ROADMAP.md`. Re-check the fast-moving agent market first, run validation, choose between the Wait Companion and Human Checkpoint Queue wedges, record that decision, then create the implementation scaffold in this repository.
+Do not start a large build merely because the idea sounds plausible. Resume implementation when there is time to run Phase 0 validation in `ROADMAP.md`. Re-check the fast-moving agent market first, validate both productivity and recovery behavior, choose the strongest wedge, record that decision, then create the implementation scaffold in this repository.
