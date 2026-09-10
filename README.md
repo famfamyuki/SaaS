@@ -9,6 +9,57 @@
 **Project established:** 2026-09-10  
 **Repository:** This repository is dedicated to AI Wait OS
 
+## North-star goal
+
+The final goal is **Attention OS**:
+
+> **In a world where humans and many AI agents work asynchronously in parallel, Attention OS continuously decides when the human should be interrupted, when they should be left alone, and what the highest-value next human state or action is — so the person no longer has to patrol AI progress manually and can move naturally between work, decisions, recovery, recreation, and off-time.**
+
+The product is successful only if it reduces coordination burden while preserving human agency. It must not turn recovered AI waiting time into an obligation to work more.
+
+## Definition of the final state
+
+The end-state product should make the following workflow normal:
+
+```text
+Human defines goals, constraints, and availability
+        ↓
+Multiple AI agents work in parallel in the background
+        ↓
+Attention OS normalizes their status and predicts when humans may be needed
+        ↓
+Attention Engine chooses the best human state
+        ├─ Human Decision
+        ├─ Human Work
+        ├─ Recovery
+        ├─ Optional Recreation
+        ├─ Off
+        └─ No Intervention
+        ↓
+Only worthwhile checkpoints interrupt the human
+        ↓
+Low-urgency work is batched or deferred to a clean boundary
+        ↓
+The system learns timing, interruption cost, preferences, and routing patterns
+        ↓
+Humans stop polling agents; agents stop waiting unnecessarily on humans
+```
+
+At maturity, the product should work across multiple agent providers and human task sources rather than becoming a front end for one AI vendor.
+
+### End-state success conditions
+
+The final product should be able to:
+
+1. **See cross-agent work state** — understand active, blocked, completed, failed, and `needs_human` states across supported agents.
+2. **Route human judgment** — turn agent requests into a prioritized Human Checkpoint Queue with enough context to decide quickly.
+3. **Choose human state before task** — decide whether work, decision, recovery, recreation, off-time, or no intervention is appropriate before selecting a concrete activity.
+4. **Protect transitions** — avoid harmful context switching and return the user at a clean boundary rather than immediately whenever technically possible.
+5. **Separate machine time from human availability** — allow AI to operate continuously without making the human continuously available.
+6. **Learn without taking control away** — improve duration, switching-cost, and timing predictions while keeping explicit user policies and overrides authoritative.
+7. **Scale from one person to teams** — route scarce human attention across many agents and qualified people with risk, urgency, ownership, and auditability.
+8. **Remain useful as agents become faster and more autonomous** — the value must come from attention orchestration and human checkpoints, not from staring at a loading screen.
+
 ## One-line thesis
 
 AI is shifting from instant answers to long-running, parallel agents. The scarce resource becomes **human attention**: what should the person do while agents work, when should they return to review or decide, and when is the best action actually to rest, disengage, or enjoy a short break?
@@ -43,6 +94,20 @@ The project should evolve in four layers:
    For teams, route scarce human judgment across many agents while protecting human focus and off-hours.
 
 The long-term product is **not a waiting-room app**. Waiting time is the wedge; human-attention orchestration is the durable problem.
+
+## Product invariants
+
+These constraints should remain true even as implementation changes:
+
+- Human attention, not screen time, is the scarce resource being optimized.
+- The system may recommend doing nothing.
+- Recovery is not a failure state.
+- Recreation is opt-in and boundary-managed, never engagement-maximized.
+- Off-hours are protected by default.
+- High-risk or authorization checkpoints remain human-controlled unless an explicit future policy system says otherwise.
+- Cross-provider interoperability is preferred over dependence on one agent vendor.
+- User policies and direct overrides outrank learned recommendations.
+- A feature that increases activity but worsens interruption burden is not progress toward the goal.
 
 ## Initial target user
 
