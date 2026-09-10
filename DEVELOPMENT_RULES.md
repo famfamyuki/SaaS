@@ -72,7 +72,7 @@ Do not repeat the whole product vision in every prompt.
 
 ## 5. Decision discipline
 
-Any decision that changes product direction, system boundaries, privacy posture, major data contracts, or validation gates must be appended to `RESEARCH_AND_DECISIONS.md` with:
+Any decision that changes product direction, system boundaries, privacy posture, major data contracts, attention modes, or validation gates must be appended to `RESEARCH_AND_DECISIONS.md` with:
 
 ```text
 Decision ID
@@ -96,6 +96,19 @@ Before building a feature:
 
 Prefer small vertical slices over infrastructure-first work.
 
+The scheduler must be implemented **state-first**, not task-first. The valid conceptual states are:
+
+```text
+HUMAN_DECISION
+HUMAN_WORK
+RECOVERY
+RECREATION
+OFF
+NO_RECOMMENDATION
+```
+
+A feature must not assume that `HUMAN_WORK` is always preferable to the other states.
+
 ## 7. Branch convention
 
 ```text
@@ -118,6 +131,8 @@ A normal implementation is not `Verified` until, where applicable:
 - key UI path is manually or browser-verified;
 - analytics events are verified;
 - failure/empty/loading states are checked;
+- quiet-hour and no-intervention behavior is checked when relevant;
+- user override/dismiss behavior is checked when relevant;
 - documentation is updated only if the durable truth changed.
 
 It is not `Shipped` until production deployment is confirmed.
@@ -134,21 +149,71 @@ agent_run_needs_human
 agent_run_completed
 human_task_started
 human_task_completed
+attention_mode_selected
+recovery_started
+recovery_completed
+recreation_started
+recreation_completed
 recommendation_offered
 recommendation_accepted
 recommendation_skipped
 attention_returned_to_agent
+attention_entered_off_mode
 checkpoint_created
 checkpoint_resolved
 ```
 
 Every event should have an explicit product question it helps answer. Do not instrument merely because data is available.
 
+Do not use analytics to maximize screen time, recreation consumption, notification clicks, or total minutes classified as productive. Core metrics must include disruption and unwanted-intervention guardrails.
+
 ## 10. Privacy rule
 
 Default to storing timing/status metadata rather than raw prompt/output content. Any move toward storing agent content requires an explicit product need, threat/privacy review, retention decision, and user-facing control.
 
-## 11. Integration rule
+Recovery and recreation features must follow additional rules:
+
+- do not infer medical, psychological, fatigue, stress, or burnout state by default;
+- do not collect health data merely to improve break suggestions;
+- do not infer personal-life routines beyond the configured product scope;
+- recreation sources are opt-in and permission-scoped;
+- explicit quiet/off-hour policy overrides learned preferences.
+
+## 11. Human-agency rule
+
+The product assists attention allocation; it does not control the user's life.
+
+Every recommendation mode must support an appropriate override such as dismiss, skip, continue current activity, or disable this recommendation type.
+
+The system must not:
+
+- shame users for declining productive work;
+- frame rest as failure;
+- claim the user medically needs a break without an appropriate explicitly designed health feature;
+- keep prompting after the user enters protected off-time;
+- silently enable recreation management;
+- make non-urgent agent work justify off-hour interruption by default.
+
+## 12. Recreation rule
+
+If recreation is implemented later, optimize **boundary quality**, not content engagement.
+
+Acceptable goals:
+
+- fit within a reliable time window;
+- warn before safe return time;
+- resume agent work cleanly;
+- let the user select permitted activity sources.
+
+Non-goals:
+
+- infinite feeds;
+- addictive ranking;
+- ad-impression maximization;
+- increasing time spent in recreation content;
+- building a general entertainment discovery platform.
+
+## 13. Integration rule
 
 No new integration should be added until its user value is clear. Each adapter must normalize into the shared domain model rather than leaking provider-specific state through the core scheduler.
 
@@ -162,7 +227,9 @@ For each integration define:
 - deletion behavior;
 - fallback when the provider changes or fails.
 
-## 12. Avoid premature platform building
+Recovery/recreation integrations require an additional statement of why access is necessary and how the user disables it.
+
+## 14. Avoid premature platform building
 
 Until real usage requires it, do not build:
 
@@ -172,19 +239,22 @@ Until real usage requires it, do not build:
 - complex ML ranking;
 - a universal agent protocol;
 - a large design system;
-- dozens of integration adapters.
+- dozens of integration adapters;
+- a health/wellness inference layer;
+- an entertainment feed or recommendation network.
 
-The core question remains whether attention scheduling and checkpoint coordination create enough user value.
+The core question remains whether attention scheduling, recovery-aware gap handling, and checkpoint coordination create enough user value.
 
-## 13. Resume checklist
+## 15. Resume checklist
 
 When this project is activated for implementation:
 
 1. Read README and the latest decisions.
 2. Re-check the external market because agent products and APIs change quickly.
 3. Run or refresh Phase 0 validation.
-4. Confirm whether the correct wedge is Wait Companion or Human Checkpoint Queue.
-5. Record the activation decision and date in `RESEARCH_AND_DECISIONS.md`.
-6. Confirm the final product/repository name; rename the repository if appropriate.
-7. Create the smallest implementation scaffold in this repository.
-8. Keep the six canonical planning documents as the source of truth and avoid documentation sprawl.
+4. Measure how real users spend gaps: work, recovery, recreation, or nothing.
+5. Confirm whether the correct wedge is Wait Companion, recovery-aware scheduling, or Human Checkpoint Queue.
+6. Record the activation decision and date in `RESEARCH_AND_DECISIONS.md`.
+7. Confirm the final product/repository name; rename the repository if appropriate.
+8. Create the smallest implementation scaffold in this repository.
+9. Keep the six canonical planning documents as the source of truth and avoid documentation sprawl.
