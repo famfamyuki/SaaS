@@ -34,7 +34,7 @@ The market signal is not simply that AI sometimes takes time. The stronger signa
 
 ## Interpretation
 
-These sources support the macro premise that delegated AI work is becoming longer-running and more parallel. They **do not validate this product**. The remaining question is whether the handoff between agent runtime and human attention is painful enough to support a dedicated product.
+These sources support the macro premise that delegated AI work is becoming longer-running and more parallel. They **do not validate this product**. The remaining questions are whether the handoff between agent runtime and human attention is painful enough to support a dedicated product, and whether the most valuable outcome of a gap is work, recovery, deliberate non-intervention, or occasionally user-authorized recreation.
 
 ## Competitive frame
 
@@ -57,7 +57,7 @@ Examples include Sunsama, Motion, Reclaim, and similar products. They optimize h
 
 **Risk:** they can add agent-aware features.
 
-**Opportunity:** their primitive is usually a calendar/task. AI Wait OS's primitive is an `AgentRun`, a `Checkpoint`, and the timing relationship between machine work and human judgment.
+**Opportunity:** their primitive is usually a calendar/task. AI Wait OS's primitive is an `AgentRun`, a `Checkpoint`, an `AttentionMode`, and the timing relationship between machine work and human attention.
 
 ### Category C — workflow/orchestration platforms
 
@@ -66,6 +66,14 @@ Agent workflow systems coordinate machine steps.
 **Risk:** they can add approval nodes and queues.
 
 **Opportunity:** AI Wait OS should focus on the **human attention plane across workflows**, rather than competing to execute all agent workflows itself.
+
+### Category D — wellness/break/entertainment tools
+
+These products may help users take breaks, focus, or consume leisure content.
+
+**Risk:** a recovery or recreation feature can become generic and undifferentiated if it is disconnected from agent timing.
+
+**Opportunity:** AI Wait OS does not need to replace these categories. Its differentiated role is deciding **when a gap should remain empty, when recovery is appropriate, when a small task fits, and when a user-authorized leisure block can end cleanly before an agent checkpoint**.
 
 ## Most important strategic distinction
 
@@ -77,7 +85,11 @@ Better framing:
 
 > Allocate human attention while autonomous systems work.
 
-The first disappears as native notifications improve. The second becomes more important as the number of concurrent agents rises.
+Best long-term framing:
+
+> Coordinate machine work and human attention without assuming every available minute should become more work.
+
+The first disappears as native notifications improve. The second becomes more important as the number of concurrent agents rises. The third adds a crucial constraint: the system should preserve human agency, recovery, and off-hours rather than optimizing for maximum occupancy.
 
 ## Durable decisions
 
@@ -123,14 +135,55 @@ The first disappears as native notifications improve. The second becomes more im
 
 **Reason:** It is clear during incubation, but the final brand should reflect human attention rather than waiting if the product advances toward orchestration.
 
+### D-008 — 2026-09-10 — Recovery is a first-class scheduler outcome
+
+**Decision:** The scheduler must be able to recommend recovery or no intervention instead of always recommending another productive task.
+
+**Reason:** Maximizing use of every waiting minute can create harmful context switching and make the product feel like an efficiency pressure system. The durable product goal is valuable attention allocation, not maximum human utilization.
+
+### D-009 — 2026-09-10 — Recreation belongs in the final vision but remains opt-in
+
+**Decision:** Bounded recreation/leisure may be managed by the final Attention OS, but only when the user explicitly enables it. It is not required for MVP.
+
+**Reason:** Leisure can be a legitimate way to reclaim longer agent gaps, but unsolicited entertainment management would expand product scope, increase distraction risk, and undermine user agency.
+
+### D-010 — 2026-09-10 — Manage recreation boundaries, not content addiction
+
+**Decision:** If recreation is implemented, optimize safe duration and clean return timing rather than engagement or content consumption.
+
+**Reason:** The product's advantage is coordination with agent timing. Building a feed-ranking or engagement engine would conflict with the core mission and create bad incentives.
+
+### D-011 — 2026-09-10 — Off-hours are protected policy state
+
+**Decision:** Off-hours must be a first-class scheduling policy. Non-urgent AI results and checkpoints should normally wait for the next work period.
+
+**Reason:** AI can work 24/7; humans should not be forced into 24/7 availability. One of the product's long-term values is separating machine operating time from human availability.
+
+### D-012 — 2026-09-10 — Recovery logic is not a health product
+
+**Decision:** Do not diagnose fatigue, stress, burnout, or medical state. Base early recovery suggestions on explicit preferences and ordinary timing/context signals.
+
+**Reason:** The product needs only enough information to coordinate attention. Medical or psychological inference adds risk, privacy burden, and unnecessary scope.
+
+### D-013 — 2026-09-10 — The final product optimizes states before tasks
+
+**Decision:** The Attention Engine should first choose among `HUMAN_DECISION`, `HUMAN_WORK`, `RECOVERY`, `RECREATION`, `OFF`, and `NO_RECOMMENDATION`, then choose a concrete activity only when relevant.
+
+**Reason:** Task ranking alone encodes the wrong assumption that every available gap should contain a task. State-first scheduling better represents the actual product mission.
+
 ## Open questions
 
 - How many genuinely usable agent gaps does a power user experience each day?
 - What is the minimum useful gap after accounting for context-switch cost?
-- Is the best action during a gap another human task, another agent delegation, or a break?
+- How often is the best outcome work, recovery, recreation, or no intervention?
+- When do users perceive recovery suggestions as helpful versus patronizing or intrusive?
+- Do users want recreation to be suggested automatically, or only available as a user-triggered mode?
+- Which leisure activities can be bounded reliably enough to support clean return timing?
 - Which agent tools expose reliable completion and `needs_human` signals?
 - Will users grant a cross-agent service enough visibility to coordinate their work?
 - How much content must be stored to make checkpoints understandable?
+- Which checkpoint types may safely be deferred until a clean interruption point?
+- How should quiet-hour and off-hour policies work for individuals versus teams?
 - Is individual willingness to pay sufficient, or is team/enterprise orchestration the better business?
 - Which source should be the first automatic integration?
 
