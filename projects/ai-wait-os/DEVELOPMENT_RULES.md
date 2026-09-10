@@ -19,7 +19,7 @@ Never use `implemented`, `verified`, and `shipped` interchangeably.
 
 ## 2. Documentation budget
 
-Keep the canonical planning set small. The current five files are the default maximum:
+Keep the canonical planning set small. The current six files are the default canonical planning set:
 
 - README.md
 - PRODUCT.md
@@ -28,7 +28,7 @@ Keep the canonical planning set small. The current five files are the default ma
 - RESEARCH_AND_DECISIONS.md
 - DEVELOPMENT_RULES.md
 
-This is six files including this rules file. Do not create a new planning document merely because a new topic appears. First update the existing owner file.
+Do not create a new planning document merely because a new topic appears. First update the existing owner file.
 
 Create a new durable document only when:
 
