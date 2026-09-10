@@ -44,7 +44,7 @@ Temporary implementation notes should live in issues/PRs or be deleted after inc
 - System boundaries, data model, integrations, security → `ARCHITECTURE.md`
 - sequence, gates, kill/pivot criteria → `ROADMAP.md`
 - market evidence, assumptions, durable decisions → `RESEARCH_AND_DECISIONS.md`
-- current project entry point/status → `README.md`
+- current project entry point/status and north-star goal → `README.md`
 - development process/document hygiene → this file
 
 Avoid duplicating full sections between files. Link instead.
@@ -54,15 +54,17 @@ Avoid duplicating full sections between files. Link instead.
 When an AI coding agent starts work:
 
 1. read `README.md`;
-2. read only the canonical file relevant to the task;
-3. inspect the current code/tests for the affected area;
-4. fetch additional documents only when a concrete dependency requires them.
+2. identify which end-state success condition the task advances;
+3. read only the canonical file relevant to the task;
+4. inspect the current code/tests for the affected area;
+5. fetch additional documents only when a concrete dependency requires them.
 
 Do not preload the entire repository documentation into every task.
 
 For implementation prompts, state:
 
 - requested outcome;
+- end-state capability advanced;
 - files/area likely affected;
 - acceptance criteria;
 - tests/checks required;
@@ -89,10 +91,14 @@ Do not silently rewrite old decisions to make history look consistent. Mark supe
 Before building a feature:
 
 - identify the user/problem hypothesis it serves;
+- identify which north-star/end-state capability it advances;
+- explain the shortest causal path from this feature to the final Attention OS goal;
 - define acceptance criteria;
 - define required analytics events;
 - identify security/privacy implications;
 - identify the smallest reversible implementation.
+
+If a feature cannot be connected to an end-state capability, a validated near-term learning goal, or a required enabling dependency, it should normally be deferred. This is the main scope-control rule for the project.
 
 Prefer small vertical slices over infrastructure-first work.
 
@@ -251,10 +257,11 @@ When this project is activated for implementation:
 
 1. Read README and the latest decisions.
 2. Re-check the external market because agent products and APIs change quickly.
-3. Run or refresh Phase 0 validation.
-4. Measure how real users spend gaps: work, recovery, recreation, or nothing.
-5. Confirm whether the correct wedge is Wait Companion, recovery-aware scheduling, or Human Checkpoint Queue.
-6. Record the activation decision and date in `RESEARCH_AND_DECISIONS.md`.
-7. Confirm the final product/repository name; rename the repository if appropriate.
-8. Create the smallest implementation scaffold in this repository.
-9. Keep the six canonical planning documents as the source of truth and avoid documentation sprawl.
+3. Confirm that the README north-star goal still describes the desired end state; if not, change it explicitly before coding.
+4. Run or refresh Phase 0 validation.
+5. Measure how real users spend gaps: work, recovery, recreation, or nothing.
+6. Confirm whether the correct wedge is Wait Companion, recovery-aware scheduling, or Human Checkpoint Queue.
+7. Record the activation decision and date in `RESEARCH_AND_DECISIONS.md`.
+8. Confirm the final product/repository name; rename the repository if appropriate.
+9. Create the smallest implementation scaffold in this repository.
+10. Keep the six canonical planning documents as the source of truth and avoid documentation sprawl.
